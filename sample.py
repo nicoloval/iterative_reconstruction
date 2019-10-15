@@ -24,14 +24,15 @@ def iterative_fun(x, y, k_out, k_in):
     yd = np.zeros(n)
     for i in range(n):
         for j in range(n):
-            if i != j:
-                xd[i] += xd[i] + y[j]/(1 + x[i]*y[j])
+            if j != i:
+                xd[i] += y[j]/(1 + x[i]*y[j])
+                yd[i] += x[j]/(1 + y[i]*x[j])
 
     # calculate final solutions xx and yy
     xx = k_out/xd
     yy = k_in/yd
 
-    return [xx, yy]
+    return xx, yy
 
 
 def iterative_solver(A, max_steps = 100, eps = 0.01):
@@ -45,9 +46,10 @@ def iterative_solver(A, max_steps = 100, eps = 0.01):
     """
     k_out = out_degree(A)
     k_in = in_degree(A)
+    L = A.sum()
     # starting point
-    x = k_out
-    y = k_in
+    x = k_out/np.sqrt(L)
+    y = k_in/np.sqrt(L)
 
     while diff > eps or step < max_steps:
         # iterative step
@@ -66,4 +68,4 @@ def iterative_solver(A, max_steps = 100, eps = 0.01):
     print('steps = {}'.format(step))
     print('diff = {}'.format(diff))
     
-    return [[x, y], step, diff]
+    return [x, y], step, diff
