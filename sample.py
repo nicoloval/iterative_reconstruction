@@ -35,7 +35,7 @@ def iterative_fun(x, y, k_out, k_in):
     return xx, yy
 
 
-def iterative_solver(A, max_steps = 100, eps = 0.01):
+def iterative_solver(A, max_steps = 300, eps = 0.01):
     """Solve the DCM problem of the network
 
     INPUT:
@@ -50,14 +50,16 @@ def iterative_solver(A, max_steps = 100, eps = 0.01):
     # starting point
     x = k_out/np.sqrt(L)
     y = k_in/np.sqrt(L)
-
-    while diff > eps or step < max_steps:
+    
+    step = 0
+    diff = eps + 1
+    while diff > eps and step < max_steps:
         # iterative step
         xx, yy = iterative_fun(x, y, k_out, k_in)
         # convergence step
         n = np.concatenate((x,y))
         nn = np.concatenate((xx,yy))
-        diff = np.linalg.norm(n - nn)  # 2-norm 
+        diff = np.linalg.norm(n - nn)/np.linalg.norm(n)  # 2-norm 
         del n, nn
         # set next step
         x = xx
@@ -65,7 +67,6 @@ def iterative_solver(A, max_steps = 100, eps = 0.01):
         del xx, yy
         step += 1
     # output  
-    print('steps = {}'.format(step))
-    print('diff = {}'.format(diff))
-    
-    return [x, y], step, diff
+    sol = np.concatenate((x, y))
+
+    return sol, step, diff
