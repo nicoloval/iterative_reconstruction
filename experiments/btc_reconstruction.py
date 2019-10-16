@@ -23,7 +23,7 @@ week = '2014-01-13.graphml'
 # load the graph
 G = nx.read_graphml(db_path + week)
 # A = nx.to_numpy_array(G, dtype=int)
-A = scipy.sparse(G) 
+A = scipy.sparse.csr_matrix(G) 
 # iterative solver
 tic = time.time()
 sol, step, diff = sample.iterative_solver(A, eps=1e-04)
