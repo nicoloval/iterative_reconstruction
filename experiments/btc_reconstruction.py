@@ -8,6 +8,7 @@ sys.path.append('../')
 import sample # where the functions are
 import network_utilities as utils
 import numpy as np
+import scipy.sparse
 import networkx as nx
 import time
 
@@ -17,10 +18,12 @@ db_path = '/mnt/hdd_data/imt/NET-btc530k-heur_2s-week/'
 # week to test
 # week = '2011-01-17.graphml'  
 # week = '2012-01-16.graphml'  
-week = '2013-01-14.graphml'  
+# week = '2013-01-14.graphml'  
+week = '2014-01-13.graphml'  
 # load the graph
 G = nx.read_graphml(db_path + week)
-A = nx.to_numpy_array(G, dtype=int)
+# A = nx.to_numpy_array(G, dtype=int)
+A = scipy.sparse(G) 
 # iterative solver
 tic = time.time()
 sol, step, diff = sample.iterative_solver(A, eps=1e-04)
