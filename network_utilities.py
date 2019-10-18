@@ -30,6 +30,7 @@ def in_degree(a):
     elif type(a) in [scipy.sparse.csr.csr_matrix, scipy.sparse.coo.coo_matrix]:
         return np.sum(a > 0, 0).A1
 
+
 @jit(nopython=True)
 def expected_out_degree(sol):
     # TODO: controllare che funzioni
