@@ -3,7 +3,7 @@ from numba import jit
 from network_utilities import * 
 
 @jit(nopython=True)
-def iterative_fun(v, par):
+def iterative_fun_dcm(v, par):
     """Return the next iterative step.
     All inputs should have the same dimension
 
@@ -37,7 +37,7 @@ def iterative_fun(v, par):
     return np.concatenate((xx, yy))
 
 
-def iterative_solver(A, max_steps = 300, eps = 0.01):
+def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm'):
     """Solve the DCM problem of the network
 
     INPUT:
@@ -46,6 +46,12 @@ def iterative_solver(A, max_steps = 300, eps = 0.01):
     OUTPUT:
         * [x, y] parameters solutions
     """
+    # method choice
+    f_dict = {
+            'dcm' : iterative_fun_dcm
+            }
+    iterative_fun = f_dict[method]
+    # 
     k_out = out_degree(A)
     k_in = in_degree(A)
     par = np.concatenate((k_out, k_in))
@@ -54,7 +60,7 @@ def iterative_solver(A, max_steps = 300, eps = 0.01):
     x = k_out/np.sqrt(L)
     y = k_in/np.sqrt(L)
     v = np.concatenate((x, y))
-    
+
     step = 0
     diff = eps + 1
     while diff > eps and step < max_steps:

@@ -2,7 +2,7 @@
 '''
 import sys
 sys.path.append('../')
-from sample import iterative_fun # where the functions are
+import sample
 import numpy as np
 import unittest  # test tool
 
@@ -11,7 +11,7 @@ class MyTest(unittest.TestCase):
     def setUp(self):
         pass
     
-    def test_ones(self):
+    def test_ones_dcm(self):
         k_out = np.array([2, 2, 0, 1])
         k_in = np.array([0, 1, 3, 1])
         par = np.concatenate((k_out, k_in))
@@ -24,7 +24,7 @@ class MyTest(unittest.TestCase):
         right_y = np.array([0, 2/3, 2, 2/3])
         right_v = np.concatenate((right_x, right_y))
 
-        self.assertTrue(np.alltrue(iterative_fun(v, par) == right_v))
+        self.assertTrue(np.alltrue(sample.iterative_fun_dcm(v, par) == right_v))
         
         # TODO: implementare un test che prendi x e y come i punti iniziali
 
