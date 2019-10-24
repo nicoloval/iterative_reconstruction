@@ -22,7 +22,7 @@ def scalability_classes(A, method):
         return d
 
 
-def setup(A, metod):
+def setup(A, method):
     """takes in input adjacency matrix and method string 
     and returns the parameters array and the initial point
     """
