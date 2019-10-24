@@ -134,22 +134,17 @@ def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm'):
     OUTPUT:
         * [x, y] parameters solutions
     """
-    # method choice
+    # function choice
     f_dict = {
             'dcm' : iterative_fun_dcm,
             'dcm_rd': iterative_fun_dcm_rd
             }
     iterative_fun = f_dict[method]
-    # 
-    k_out = out_degree(A)
-    k_in = in_degree(A)
-    par = np.concatenate((k_out, k_in))
-    L = A.sum()
-    # starting point
-    x = k_out/np.sqrt(L)
-    y = k_in/np.sqrt(L)
-    v = np.concatenate((x, y))
 
+    # initial setup
+    par, v = setup(A, method)
+
+    # iteration steps
     step = 0
     diff = eps + 1
     while diff > eps and step < max_steps:
