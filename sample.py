@@ -1,6 +1,58 @@
 import numpy as np
 from numba import jit
 from network_utilities import * 
+from collections import defaultdict
+
+
+def scalability_classes(A, method):
+    """returns a dictionary with the scalability classes, 
+    meaning the unique classes of coupled in and out degree
+    """
+    if method == 'dcm_rd':
+        k_out = out_degree(A)
+        k_in = in_degree(A)
+        d = defaultdict(list)
+        tup = tuple([k_out[0], k_in[0]])
+        d[tup] = [0]
+        n = len(k_out)
+        for i in range(1, n):
+            # visit each couple (in, out) and add new classes to the dict
+            tup = tuple([k_out[i], k_in[i]])
+            d[tup].append(i)
+        return d
+
+
+def setup(A, metod):
+    """takes in input adjacency matrix and method string 
+    and returns the parameters array and the initial point
+    """
+    if method == 'dcm':
+        k_out = out_degree(A)
+        k_in = in_degree(A)
+        par = np.concatenate((k_out, k_in))
+        L = A.sum()
+        # starting point
+        x = k_out/np.sqrt(L)
+        y = k_in/np.sqrt(L)
+        v0 = np.concatenate((x, y))
+        
+        return [par, v0]
+
+    if method == 'dcm_rd':
+        d = scalability_classes(A, method='dcm_rd')
+        keys = list(d.keys())
+        k_out = np.array([x[0] for x in keys])
+        k_in = np.array([x[1] for x in keys])
+        c = np.array([len(x) for x in list(d.values())])
+        par = np.concatenate((k_out, k_in, c))
+        # starting point
+        L = A.sum()
+        x = k_out/np.sqrt(L)
+        y = k_in/np.sqrt(L)
+        v0 = np.concatenate((x, y))
+
+        return [par, v0]
+
 
 @jit(nopython=True)
 def iterative_fun_dcm(v, par):
@@ -46,7 +98,6 @@ def iterative_fun_dcm_rd(v, par):
 
     """
 
-    print(par[0])
     n = int(len(v)/2)
     x = v[0:n]
     y = v[n:2*n]
@@ -79,12 +130,14 @@ def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm'):
     INPUT:
         * A: adjacency matrix 
         * max_steps: maximum number of steps
+        * method: 'dcm', 'dcm_rd'
     OUTPUT:
         * [x, y] parameters solutions
     """
     # method choice
     f_dict = {
-            'dcm' : iterative_fun_dcm
+            'dcm' : iterative_fun_dcm,
+            'dcm_rd': iterative_fun_dcm_rd
             }
     iterative_fun = f_dict[method]
     # 
