@@ -37,6 +37,42 @@ def iterative_fun_dcm(v, par):
     return np.concatenate((xx, yy))
 
 
+@jit(nopython=True)
+def iterative_fun_dcm_rd(v, par):
+    """
+    :param v: np.array
+    :param par: np.array
+    :return: scalar float
+
+    """
+
+    print(par[0])
+    n = int(len(v)/2)
+    x = v[0:n]
+    y = v[n:2*n]
+    k_out = par[0:n]
+    k_in = par[n:2*n]
+    c = par[2*n:3*n]
+
+    xd = np.zeros(n)
+    yd = np.zeros(n)
+
+    for i in range(0, n):
+        for j in range(0, n):
+            if j != i:
+                xd[i] += c[j]*y[j]/(1 + x[i]*y[j])
+                yd[i] += c[j]*x[j]/(1 + y[i]*x[j])
+            else:
+                xd[i] += (c[i] - 1)*y[i]/(1 + x[i]*y[i])
+                yd[i] += (c[i] - 1)*x[i]/(1 + x[i]*y[i])
+
+    # calculate final solutions xx and yy
+    xx = k_out/xd
+    yy = k_in/yd
+
+    return np.concatenate((xx, yy))
+
+
 def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm'):
     """Solve the DCM problem of the network
 
