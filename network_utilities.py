@@ -31,10 +31,8 @@ def in_degree(a):
         return np.sum(a > 0, 0).A1
 
 
-@jit(nopython=True)
-def expected_out_degree(sol):
+def expected_out_degree(sol, method, par=None):
     # TODO: controllare che funzioni
-    # TODO: if par is not given call setting()
     """returns expected out degree after ERGM method, on undirected networks
     returns just the expected degree
 
@@ -51,6 +49,15 @@ def expected_out_degree(sol):
         array of expected out-degrees
 
     """
+    if method == 'dcm':
+        return expected_out_degree_dcm(sol)
+
+    if method == 'dcm_rd':
+        return expected_out_degree_dcm_rd(sol, par)
+
+
+@jit(nopython=True)
+def expected_out_degree_dcm(sol):
     n = int(sol.size / 2)
     a_out = sol[0:n]
     a_in = sol[n:]
@@ -65,7 +72,23 @@ def expected_out_degree(sol):
 
 
 @jit(nopython=True)
-def expected_in_degree(sol):
+def expected_out_degree_dcm_rd(sol, par):
+    n = int(sol.size/2)
+    a_out = sol[0:n]
+    a_in = sol[n:]
+    k = np.zeros(n)  # allocate k
+    c = par[2*n:3*n]  # cardinality of reduced equivalent classes
+
+    for i in range(n):
+        for j in range(n):
+            if j != i:
+                k[i] += c[j]*a_in[j]*a_out[i]/(1 + a_in[j]*a_out[i])
+            else:
+                k[i] += (c[i] - 1)*a_in[i]*a_out[i]/(1 + a_in[i]*a_out[i])
+    return k
+
+
+def expected_in_degree(sol, method, par=None):
     """returns expected in degree after ERGM method, on undirected networks
     returns just the expected degree
 
@@ -81,6 +104,15 @@ def expected_in_degree(sol):
     :return k: :class:`~numpy.ndarray`
         array of expected in-degrees
     """
+    if method == 'dcm':
+        return expected_in_degree_dcm(sol)
+
+    if method == 'dcm_rd':
+        return expected_in_degree_dcm_rd(sol, par)
+
+
+@jit(nopython=True)
+def expected_in_degree_dcm(sol):
     n = int(sol.size/2)
     a_out = sol[0:n]
     a_in = sol[n:]
@@ -91,4 +123,23 @@ def expected_in_degree(sol):
                 k[i] += a_in[i]*a_out[j]/(1 + a_in[i]*a_out[j])
 
     return k
+
+
+@jit(nopython=True)
+def expected_in_degree_dcm_rd(sol, par):
+    n = int(sol.size/2)
+    a_out = sol[0:n]
+    a_in = sol[n:]
+    k = np.zeros(n)  # allocate k
+    c = par[2*n:3*n]  # cardinality of reduced equivalent classes
+
+    for i in range(n):
+        for j in range(n):
+            if j != i:
+                k[i] += c[j]*a_out[j]*a_in[i]/(1 + a_out[j]*a_in[i])
+            else:
+                k[i] += (c[i] - 1)*a_out[i]*a_in[i]/(1 + a_out[i]*a_in[i])
+
+    return k
+
 
