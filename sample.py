@@ -1,7 +1,7 @@
 import numpy as np
 from numba import jit
-from network_utilities import * 
 from collections import defaultdict
+import scipy.sparse
 
 
 def scalability_classes(A, method):
@@ -22,6 +22,28 @@ def scalability_classes(A, method):
         return d
 
 
+def rd2full(x, d, method):
+    """converts a reduced vector to full form
+    """
+    if method == 'dcm_rd':
+        return rd2full_dcm_rd(x, d)
+
+
+def rd2full_dcm_rd(x, d):
+    val = list(d.values())
+    n = 0  # dimension of the full solution
+    m = len(val)
+    for i in range(0, m):  # todo: usare un sum invece del ciclo
+        n += len(val[i])
+    # allocate full solution
+    y1 = np.zeros(n, dtype=x.dtype)
+    y2 = np.zeros(n, dtype=x.dtype)
+    for i in range(0, m): 
+        y1[val[i]] = x[i]
+        y2[val[i]] = x[i+m]
+    return np.hstack((y1, y2))
+
+
 def setup(A, method):
     """takes in input adjacency matrix and method string 
     and returns the parameters array and the initial point
@@ -40,10 +62,10 @@ def setup(A, method):
 
     if method == 'dcm_rd':
         d = scalability_classes(A, method='dcm_rd')
-        keys = list(d.keys())
+        keys = list(d)
         k_out = np.array([x[0] for x in keys])
         k_in = np.array([x[1] for x in keys])
-        c = np.array([len(x) for x in list(d.values())])
+        c = np.array([len(d[(kout,kin)]) for kout,kin in zip(k_out, k_in)])
         par = np.concatenate((k_out, k_in, c))
         # starting point
         L = A.sum()
@@ -161,3 +183,170 @@ def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm'):
     sol = v
 
     return sol, step, diff
+
+
+def out_degree(a):
+    # todo: for out_degree and in_degree...check np.int32 is always returned
+    """returns matrix A out degrees
+
+    :param a: numpy.ndarray, a matrix
+    :return: numpy.ndarray
+    """
+    # if the matrix is a numpy array
+    if type(a) == np.ndarray:
+        return np.sum(a > 0, 1)
+    # if the matrix is a scipy sparse matrix
+    elif type(a) in [scipy.sparse.csr.csr_matrix, scipy.sparse.coo.coo_matrix]:
+        return np.sum(a > 0, 1).A1
+
+
+def in_degree(a):
+    """returns matrix A in degrees
+
+    :param a: np.ndarray, a matrix
+    :return: numpy.ndarray
+    """
+    # if the matrix is a numpy array
+    if type(a) == np.ndarray:
+        return np.sum(a > 0, 0)
+    # if the matrix is a scipy sparse matrix
+    elif type(a) in [scipy.sparse.csr.csr_matrix, scipy.sparse.coo.coo_matrix]:
+        return np.sum(a > 0, 0).A1
+
+
+def expected_out_degree(sol, method, d=None):
+    # TODO: controllare che funzioni
+    """returns expected out degree after ERGM method, on undirected networks
+    returns just the expected degree
+
+    Parameters
+    ----------
+
+    :param sol: :class:`~numpy.ndarray`
+        Solution of the ERGM problem
+
+    Returns
+    -------
+
+    :return k: :class:`~numpy.ndarray`
+        array of expected out-degrees
+
+    """
+    if method == 'dcm':
+        return expected_out_degree_dcm(sol)
+
+    if method == 'dcm_rd':
+        # cardinality of reduced equivalent classes
+        c = [len(d[key]) for key in d.keys()]  
+        k = expected_out_degree_dcm_rd(sol, c)
+        # convert rd to full array
+        m = len(d)
+        d_vals = list(d.values())
+        n = np.array([len(d[x]) for x in d]).sum()
+        y = np.zeros(n, dtype=k.dtype)
+        for i in range(m):
+            y[d_vals[i]] = k[i] 
+
+        return y 
+
+
+        return rd2full_dcm_rd(k, d)
+
+
+@jit(nopython=True)
+def expected_out_degree_dcm(sol):
+    n = int(sol.size / 2)
+    a_out = sol[0:n]
+    a_in = sol[n:]
+
+    k = np.zeros(n)  # allocate k
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                k[i] += a_in[j]*a_out[i] / (1 + a_in[j]*a_out[i])
+
+    return k
+
+
+@jit(nopython=True)
+def expected_out_degree_dcm_rd(sol, c):
+    n = int(sol.size/2)
+    a_out = sol[0:n]
+    a_in = sol[n:]
+    k = np.zeros(n)  # allocate k
+
+    for i in range(n):
+        for j in range(n):
+            if j != i:
+                k[i] += c[j]*a_in[j]*a_out[i]/(1 + a_in[j]*a_out[i])
+            else:
+                k[i] += (c[i] - 1)*a_in[i]*a_out[i]/(1 + a_in[i]*a_out[i])
+    return k 
+
+
+def expected_in_degree(sol, method, d=None):
+    """returns expected in degree after ERGM method, on undirected networks
+    returns just the expected degree
+
+    Parameters
+    ----------
+
+    :param sol: :class:`~numpy.ndarray`
+        Solution of the ERGM problem
+
+    Returns
+    -------
+
+    :return k: :class:`~numpy.ndarray`
+        array of expected in-degrees
+    """
+    if method == 'dcm':
+        return expected_in_degree_dcm(sol)
+
+    if method == 'dcm_rd':
+        # cardinality of scalability classes 
+        c = [len(d[key]) for key in d.keys()]
+        # expected in degree by class
+        k = expected_in_degree_dcm_rd(sol, c)
+        # convert rd to full array
+        m = len(d)
+        d_vals = list(d.values())
+        n = np.array([len(d[x]) for x in d]).sum()
+        y = np.zeros(n, dtype=k.dtype)
+        for i in range(m):
+            y[d_vals[i]] = k[i] 
+
+        return y 
+
+
+@jit(nopython=True)
+def expected_in_degree_dcm(sol):
+    n = int(sol.size/2)
+    a_out = sol[0:n]
+    a_in = sol[n:]
+    k = np.zeros(n)  # allocate k
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                k[i] += a_in[i]*a_out[j]/(1 + a_in[i]*a_out[j])
+
+    return k
+
+
+@jit(nopython=True)
+def expected_in_degree_dcm_rd(sol, c):
+    n = int(sol.size/2)
+    a_out = sol[0:n]
+    a_in = sol[n:]
+    k = np.zeros(n)  # allocate k
+
+    for i in range(n):
+        for j in range(n):
+            if j != i:
+                k[i] += c[j]*a_out[j]*a_in[i]/(1 + a_out[j]*a_in[i])
+            else:
+                k[i] += (c[i] - 1)*a_out[i]*a_in[i]/(1 + a_out[i]*a_in[i])
+
+    return k 
+
+
