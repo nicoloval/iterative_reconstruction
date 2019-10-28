@@ -1,7 +1,13 @@
 import numpy as np
 from numba import jit
-from collections import defaultdict
+from collections import OrderedDict
 import scipy.sparse
+
+
+class OrderedDefaultListDict(OrderedDict): #name according to default
+    def __missing__(self, key):
+        self[key] = value = [] #change to whatever default you want
+        return value
 
 
 def scalability_classes(A, method):
@@ -11,7 +17,7 @@ def scalability_classes(A, method):
     if method == 'dcm_rd':
         k_out = out_degree(A)
         k_in = in_degree(A)
-        d = defaultdict(list)
+        d = OrderedDefaultListDict()
         tup = tuple([k_out[0], k_in[0]])
         d[tup] = [0]
         n = len(k_out)
