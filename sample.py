@@ -356,3 +356,67 @@ def expected_in_degree_dcm_rd(sol, c):
     return k 
 
 
+@jit(nopython=True)
+def expected_dyads(sol, method, d=None):
+        """
+    Computes the expected number of dyads on the ERGM ensemble
+    :param sol: np.ndarray, problem's solution 
+    :param method: string, the available ERGM methods:
+        'dcm':
+        'dcm_rd':
+    :param d: ordered Dict, contains the info about the reduced system
+    :return:
+    """
+    if method == 'dcm':
+        return expected_dyads_dcm(sol)
+
+    if method == 'dcm_rd':
+        # cardinality of scalability classes 
+        c = [len(d[key]) for key in d.keys()]
+        # expected in degree by class
+        ed = expected_dyads_dcm_rd(sol, c)
+        # convert rd to full array
+        m = len(d)
+        d_vals = list(d.values())
+        n = np.array([len(d[x]) for x in d]).sum()
+        y = np.zeros(n, dtype=ed.dtype)
+        for i in range(m):
+            y[d_vals[i]] = ed[i]
+
+        return y
+
+
+@jit(nopython=True)
+def expected_dyads_dcm(sol):
+    # edges
+    n = int(len(sol)/2)
+    y = sol[:n]
+    x = sol[n:]
+    er = 0
+    for i in range(n):
+        temp = 0
+        for j in range(n):
+            temp += x[j]*y[j]/((1 + x[i]*y[j])*(1 + y[i]*x[j]))
+        # i != j should not be accounted
+        temp -= x[i]*y[i]/((1 + x[i]*y[i])*(1 + y[i]*x[i]))
+        er += x[i]*y[i]*temp
+        return er
+
+@jit(nopython=True)
+def expected_dyads_dcm_rd(sol, c):
+    n = int(len(sol)/2)
+    y = sol[:n]
+    x = sol[n:]
+    c = par[2]
+    er = 0
+    for i in range(n):
+        temp = 0
+        for j in range(n):
+            if i != j:
+                temp += c[j]*x[j]*y[j]/((1 + x[i]*y[j])*(1 + x[j]*y[i]))
+            else:
+                temp += (c[j] - 1)*x[j]*y[j] / \
+                        ((1 + x[i]*y[j])*(1 + x[j]*y[i]))
+        er += c[i]*x[i]*y[i]*temp
+        return er
+
