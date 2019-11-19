@@ -358,7 +358,7 @@ def expected_in_degree_dcm_rd(sol, c):
 
 @jit(nopython=True)
 def expected_dyads(sol, method, d=None):
-        """
+    """
     Computes the expected number of dyads on the ERGM ensemble
     :param sol: np.ndarray, problem's solution 
     :param method: string, the available ERGM methods:
@@ -400,7 +400,8 @@ def expected_dyads_dcm(sol):
         # i != j should not be accounted
         temp -= x[i]*y[i]/((1 + x[i]*y[i])*(1 + y[i]*x[i]))
         er += x[i]*y[i]*temp
-        return er
+    return er
+
 
 @jit(nopython=True)
 def expected_dyads_dcm_rd(sol, c):
@@ -418,5 +419,5 @@ def expected_dyads_dcm_rd(sol, c):
                 temp += (c[j] - 1)*x[j]*y[j] / \
                         ((1 + x[i]*y[j])*(1 + x[j]*y[i]))
         er += c[i]*x[i]*y[i]*temp
-        return er
+    return er
 
