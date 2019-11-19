@@ -408,7 +408,6 @@ def expected_dyads_dcm_rd(sol, c):
     n = int(len(sol)/2)
     y = sol[:n]
     x = sol[n:]
-    c = par[2]
     er = 0
     for i in range(n):
         temp = 0
