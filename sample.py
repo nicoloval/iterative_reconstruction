@@ -356,8 +356,7 @@ def expected_in_degree_dcm_rd(sol, c):
     return k 
 
 
-@jit(nopython=True)
-def expected_dyads(sol, method, d=None):
+def expected_dyads(sol, method, A=None, t="dyads"):
     """
     Computes the expected number of dyads on the ERGM ensemble
     :param sol: np.ndarray, problem's solution 
@@ -368,9 +367,26 @@ def expected_dyads(sol, method, d=None):
     :return:
     """
     if method == 'dcm':
-        return expected_dyads_dcm(sol)
+        if t == 'dyads':
+            return expected_dyads_dcm(sol)
+        if t == 'singles':
+            return expected_singles_dcm(sol)
+        if t == 'zeros':
+            return expected_zeros_dcm(sol)
 
     if method == 'dcm_rd':
+        d = scalability_classes(A, 'dcm_rd')
+        sol_full = rd2full(sol, d, 'dcm_rd')
+ 
+        if t == 'dyads':
+            return expected_dyads_dcm(sol_full)
+        if t == 'singles':
+            return expected_singles_dcm(sol_full)
+        if t == 'zeros':
+            return expected_zeros_dcm(sol_full)
+
+        #TODO check the following commented code and dcm_rd method for dyads
+        """ 
         # cardinality of scalability classes 
         c = [len(d[key]) for key in d.keys()]
         # expected in degree by class
@@ -382,12 +398,15 @@ def expected_dyads(sol, method, d=None):
         y = np.zeros(n, dtype=ed.dtype)
         for i in range(m):
             y[d_vals[i]] = ed[i]
-
         return y
+        return y
+        """
 
 
 @jit(nopython=True)
 def expected_dyads_dcm(sol):
+    """ compute the expected number of reciprocated links 
+    """
     # edges
     n = int(len(sol)/2)
     y = sol[:n]
@@ -404,7 +423,46 @@ def expected_dyads_dcm(sol):
 
 
 @jit(nopython=True)
+def expected_singles_dcm(sol):
+    """ compute the expected number of non reciprocated links 
+    """
+    # edges
+    n = int(len(sol)/2)
+    y = sol[:n]
+    x = sol[n:]
+    er = 0
+    for i in range(n):
+        temp = 0
+        for j in range(n):
+            temp += (y[i]*x[j] + y[j]*x[i])/((1 + x[i]*y[j])*(1 + y[i]*x[j]))
+        # i != j should not be accounted
+        temp -= 2*x[i]*y[i]/((1 + x[i]*y[i])*(1 + y[i]*x[i]))
+        er += temp
+    return er
+
+
+@jit(nopython=True)
+def expected_zeros_dcm(sol):
+    """ compute the expected number of non present links (number of couples not connected)
+    """
+    # edges
+    n = int(len(sol)/2)
+    y = sol[:n]
+    x = sol[n:]
+    er = 0
+    for i in range(n):
+        temp = 0
+        for j in range(n):
+            temp += 1/((1 + x[i]*y[j])*(1 + y[i]*x[j]))
+        # i != j should not be accounted
+        temp -= 1/((1 + x[i]*y[i])*(1 + y[i]*x[i]))
+        er += temp
+    return er
+
+
+@jit(nopython=True)
 def expected_dyads_dcm_rd(sol, c):
+    #TODO: redefine this function in a working way
     n = int(len(sol)/2)
     y = sol[:n]
     x = sol[n:]
@@ -419,4 +477,5 @@ def expected_dyads_dcm_rd(sol, c):
                         ((1 + x[i]*y[j])*(1 + x[j]*y[i]))
         er += c[i]*x[i]*y[i]*temp
     return er
+
 
