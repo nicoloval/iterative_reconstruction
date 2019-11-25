@@ -1,4 +1,4 @@
-'''Test function scalability_classes
+'''Test function dyads_expectation calculation
 '''
 import sys
 sys.path.append('../')
@@ -58,7 +58,7 @@ class MyTest(unittest.TestCase):
         dyads_analytical_expectation = 5 
         sol = np.array([1]*10)
         dyads_fun_expectation = sample.expected_dyads(sol, method='dcm', t='zeros') 
-        print(dyads_fun_expectation)
+        # print(dyads_fun_expectation)
 
         self.assertTrue(dyads_fun_expectation == dyads_analytical_expectation)
 

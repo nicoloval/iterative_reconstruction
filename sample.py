@@ -221,6 +221,31 @@ def in_degree(a):
         return np.sum(a > 0, 0).A1
 
 
+def dyads_count(a):
+    """Counts number of dyads
+    """
+    at = a.transpose()
+    tmp = a + at
+    return int(np.matrix(tmp[tmp == 2]).shape[1]/2)
+
+
+def singles_count(a):
+    """Counts number of not-reciprocated links
+    """
+    at = a.transpose()
+    tmp = a + at
+    return int(np.matrix(tmp[tmp == 1]).shape[1]/2)
+
+
+def zeros_count(a):
+    """Counts number of empty couples of nodes
+    """
+    n = a.shape[0]
+    at = a.transpose()
+    tmp = a + at
+    return int((np.matrix(tmp[tmp == 0]).shape[1] - n)/2) 
+
+
 def expected_out_degree(sol, method, d=None):
     # TODO: controllare che funzioni
     """returns expected out degree after ERGM method, on undirected networks
@@ -255,9 +280,6 @@ def expected_out_degree(sol, method, d=None):
             y[d_vals[i]] = k[i] 
 
         return y 
-
-
-        return rd2full_dcm_rd(k, d)
 
 
 @jit(nopython=True)

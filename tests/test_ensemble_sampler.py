@@ -37,10 +37,10 @@ class MyTest(unittest.TestCase):
         expected_k = np.concatenate((expected_out_it, expected_in_it))
         sample.ensemble_sampler(sol=sol, m=1, method='dcm')
         AA = scipy.sparse.load_npz('dcm_graph_0.npz')
-        # debug check
         k_out = sample.out_degree(AA)
         k_in = sample.in_degree(AA)
         k = np.concatenate((k_out, k_in))
+        # debug check
         # print(k)
         # print(expected_k)
         # print(np.linalg.norm(k- expected_k))
