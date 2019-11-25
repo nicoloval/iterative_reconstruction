@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from numba import jit
 from collections import OrderedDict
 import scipy.sparse
@@ -477,5 +478,35 @@ def expected_dyads_dcm_rd(sol, c):
                         ((1 + x[i]*y[j])*(1 + x[j]*y[i]))
         er += c[i]*x[i]*y[i]*temp
     return er
+
+
+def ensemble_sampler(sol, m, method, sample_dir='.', start=0, seed=None):
+    """ samples m adjacency matrices in diretory sampler_dir, after the method ergm solution given by sol
+    """
+    np.random.seed(seed)
+    if method == 'dcm':
+        n = int(len(sol)/2)
+        x = sol[:n]
+        y = sol[n:]
+        # if sample_dir doesn't exists, creates it
+        try:
+            os. mkdir(sample_dir)
+        except FileExistsError:
+            pass
+        # sampling
+        for k in range(start, start + m):
+            r = np.random.random((n, n))
+            a = np.outer(x, y)/(np.ones((n, n)) + np.outer(x, y))
+            np.fill_diagonal(a, 0)
+            c = np.zeros((n, n))
+            c[a.__gt__(r)] = 1
+            del r, a
+            sparse_matrix = scipy.sparse.coo_matrix(c)
+            del c
+
+            outfile = sample_dir + '/' + 'dcm_graph_{}.npz'.format(k)
+            scipy.sparse.save_npz(outfile, sparse_matrix)
+
+        return 0
 
 
