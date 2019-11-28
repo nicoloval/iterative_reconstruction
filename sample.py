@@ -426,6 +426,37 @@ def expected_dyads(sol, method, A=None, t="dyads"):
         """
 
 
+def std_dyads(sol, method, A=None, t="dyads"):
+    """
+    Computes the standard deviation of the number of dyads on the ERGM ensemble
+    :param sol: np.ndarray, problem's solution 
+    :param method: string, the available ERGM methods:
+        'dcm':
+        'dcm_rd':
+    :param d: ordered Dict, contains the info about the reduced system
+    :return:
+    """
+    if method == 'dcm':
+        if t == 'dyads':
+            return std_dyads_dcm(sol)
+        if t == 'singles':
+            return std_singles_dcm(sol)
+        if t == 'zeros':
+            return std_zeros_dcm(sol)
+
+    if method == 'dcm_rd':
+        d = scalability_classes(A, 'dcm_rd')
+        sol_full = rd2full(sol, d, 'dcm_rd')
+ 
+        if t == 'dyads':
+            return std_dyads_dcm(sol_full)
+        if t == 'singles':
+            return std_singles_dcm(sol_full)
+        if t == 'zeros':
+            return std_zeros_dcm(sol_full)
+
+
+
 @jit(nopython=True)
 def expected_dyads_dcm(sol):
     """ compute the expected number of reciprocated links 
@@ -484,10 +515,64 @@ def expected_zeros_dcm(sol):
 
 
 @jit(nopython=True)
+def std_dyads_dcm(sol):
+    """ compute the expected number of reciprocated links 
+    """
+    # edges
+    n = int(len(sol)/2)
+    x = sol[:n]
+    y = sol[n:]
+    temp = 0
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                pij = x[i]*y[j]/(1 + x[i]*y[j]) 
+                pji = x[j]*y[i]/(1 + x[j]*y[i])
+                temp += 2*pij*pji*(1 - pij*pji) 
+    return np.sqrt(temp)
+
+
+@jit(nopython=True)
+def std_singles_dcm(sol):
+    """ compute the expected number of reciprocated links 
+    """
+    # edges
+    n = int(len(sol)/2)
+    x = sol[:n]
+    y = sol[n:]
+    temp = 0
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                pij = x[i]*y[j]/(1 + x[i]*y[j]) 
+                pji = x[j]*y[i]/(1 + x[j]*y[i])
+                temp += pij*(1 - pji)*(1 - pij*(1 - pji) - pji*(1 - pij))  
+    return np.sqrt(temp)
+
+
+@jit(nopython=True)
+def std_zeros_dcm(sol):
+    """ compute the expected number of zeros couples 
+    """
+    # edges
+    n = int(len(sol)/2)
+    x = sol[:n]
+    y = sol[n:]
+    temp = 0
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                pij = x[i]*y[j]/(1 + x[i]*y[j]) 
+                pji = x[j]*y[i]/(1 + x[j]*y[i])
+                temp += 2*(1 - pij)*(1 - pji)*(1 - (1 - pij)*(1 - pji)) 
+    return np.sqrt(temp)
+
+
+@jit(nopython=True)
 def expected_dyads_dcm_rd(sol, c):
     #TODO: redefine this function in a working way
     n = int(len(sol)/2)
-    y = sol[:n]
+    y = sol[:n] #TODO: tmeporary fix from an old notation
     x = sol[n:]
     er = 0
     for i in range(n):
