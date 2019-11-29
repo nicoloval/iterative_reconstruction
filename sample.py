@@ -227,9 +227,9 @@ def dyads_count(a):
     at = a.transpose()
     tmp = a + at
     if isinstance(a, np.ndarray):
-        return int(len(a[a == 2])/2)
+        return int(len(tmp[tmp == 2]))
     if isinstance(a, scipy.sparse.csr.csr_matrix):
-        return int(a[a == 2].shape[1]/2) 
+        return int(tmp[tmp == 2].shape[1]) 
 
 
 def singles_count(a):
@@ -238,9 +238,9 @@ def singles_count(a):
     at = a.transpose()
     tmp = a + at
     if isinstance(a, np.ndarray):
-        return int(len(a[a == 1]))
+        return int(len(tmp[tmp == 1])/2)
     if isinstance(a, scipy.sparse.csr.csr_matrix):
-        return int(a[a == 1].shape[1]) 
+        return int(tmp[tmp == 1].shape[1]/2) 
 
 
 def zeros_count(a):
@@ -250,9 +250,9 @@ def zeros_count(a):
     at = a.transpose()
     tmp = a + at
     if isinstance(a, np.ndarray):
-        return int((n*(n-1) - np.count_nonzero(tmp))/2)
+        return int((n*(n-1) - np.count_nonzero(tmp)))
     if isinstance(a, scipy.sparse.csr.csr_matrix):
-        return int((n*(n-1) - tmp.count_nonzero())/2)
+        return int((n*(n-1) - tmp.count_nonzero()))
 
 
 def expected_out_degree(sol, method, d=None):
