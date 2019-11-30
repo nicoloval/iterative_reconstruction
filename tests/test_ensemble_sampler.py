@@ -1,4 +1,4 @@
-'''Test function iterative_solver 
+'''Test function sampling function. check the graphs in the ensemble respect the constraints 
 '''
 import sys
 sys.path.append('../')

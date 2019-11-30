@@ -16,7 +16,7 @@ class MyTest(unittest.TestCase):
         pass
     
 
-    def test_array_dcm_2(self):
+    def test_array_dcm(self):
         A = np.array([[0, 1, 1, 0, 1],
                 [0, 0, 1, 1, 0],
                 [0, 0, 0, 0, 0],
@@ -27,6 +27,45 @@ class MyTest(unittest.TestCase):
         actual_singles = 0
         actual_zeros = 0
         n = len(A)
+        for i in range(n):
+            for j in range(n):
+                if i != j:
+                    actual_dyads += A[i,j]*A[j,i]
+                    actual_singles += A[i,j]*(1 - A[j,i])
+                    actual_zeros += (1 - A[i,j])*(1 - A[j,i])
+
+        dyads = sample.dyads_count(A)
+        singles = sample.singles_count(A)
+        zeros = sample.zeros_count(A)
+
+        # debug check
+        """
+        print('\n')
+        print(actual_dyads)
+        print(actual_singles)
+        print(actual_zeros)
+        print(dyads)
+        print(singles)
+        print(zeros)
+        """
+        self.assertTrue(np.allclose(dyads, actual_dyads, atol=1e-02, rtol=1e-02))
+        self.assertTrue(np.allclose(singles, actual_singles, atol=1e-02, rtol=1e-02))
+        self.assertTrue(np.allclose(zeros, actual_zeros, atol=1e-02, rtol=1e-02))
+
+
+    def test_sparse_dcm(self):
+        A = np.array([[0, 1, 1, 0, 1],
+                [0, 0, 1, 1, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 1, 0, 1],
+                [1, 1, 0, 1, 0]])
+
+        A = scipy.sparse.csr_matrix(A) 
+
+        actual_dyads = 0
+        actual_singles = 0
+        actual_zeros = 0
+        n = A.shape[1]
         for i in range(n):
             for j in range(n):
                 if i != j:
