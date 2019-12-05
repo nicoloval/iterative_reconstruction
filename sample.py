@@ -497,9 +497,9 @@ def expected_singles_dcm(sol):
     for i in range(n):
         temp = 0
         for j in range(n):
-            temp += (y[i]*x[j] + y[j]*x[i])/((1 + x[i]*y[j])*(1 + y[i]*x[j]))
+            temp += y[j]*x[i]/((1 + x[i]*y[j])*(1 + y[i]*x[j]))
         # i != j should not be accounted
-        temp -= 2*x[i]*y[i]/((1 + x[i]*y[i])*(1 + y[i]*x[i]))
+        temp -= x[i]*y[i]/((1 + x[i]*y[i])*(1 + y[i]*x[i]))
         er += temp
     return er
 
