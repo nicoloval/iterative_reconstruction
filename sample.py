@@ -626,3 +626,11 @@ def ensemble_sampler(sol, m, method, sample_dir='.', start=0, seed=None):
         return 0
 
 
+def probability_matrix(sol, method):
+    if method == 'dcm':
+        n = int(len(sol)/2)
+        x = sol[:n]
+        y = sol[n:]
+        p = np.outer(x, y)/(np.ones((n, n)) + np.outer(x, y))
+        np.fill_diagonal(p, 0)
+        return p
