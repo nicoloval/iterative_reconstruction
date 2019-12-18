@@ -11,6 +11,20 @@ class MyTest(unittest.TestCase):
     def setUp(self):
         pass
     
+
+    def test_ones_cm(self):
+        par = np.array([1, 3, 2, 2])
+
+        v = np.array([1, 1, 1, 1])
+
+        right_v = np.array([2/3, 2, 4/3, 4/3])
+
+        # debug
+        # print(right_v)
+        # print(sample.iterative_fun_cm(v, par)) 
+        self.assertTrue(np.alltrue(sample.iterative_fun_cm(v, par) == right_v))
+
+
     def test_ones_dcm(self):
         k_out = np.array([2, 2, 0, 1])
         k_in = np.array([0, 1, 3, 1])
@@ -27,6 +41,7 @@ class MyTest(unittest.TestCase):
         self.assertTrue(np.alltrue(sample.iterative_fun_dcm(v, par) == right_v))
         
         # TODO: implementare un test che prendi x e y come i punti iniziali
+
 
     def test_ones_dcm_rd(self):
         k_out = np.array([0, 1, 2])

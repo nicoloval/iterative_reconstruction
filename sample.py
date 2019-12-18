@@ -84,6 +84,38 @@ def setup(A, method):
 
 
 @jit(nopython=True)
+def iterative_fun_cm(v, par):
+    """Return the next iterative step.
+    All inputs should have the same dimension
+
+    Input:
+    ------
+        * x at step n
+        * k
+    Output:
+    -------
+        * x at step n+1
+    """
+
+    # problem dimension
+    n = len(v)
+    x = v
+    k = par
+    # calculate the denominators 
+    xd = np.zeros(n)
+
+    for i in range(n):
+        for j in range(n):
+            if j != i:
+                xd[i] += x[j]/(1 + x[i]*x[j])
+
+    # calculate final solutions xx and yy
+    xx = k/xd
+
+    return xx 
+
+
+@jit(nopython=True)
 def iterative_fun_dcm(v, par):
     """Return the next iterative step.
     All inputs should have the same dimension
@@ -579,7 +611,7 @@ def std_zeros_dcm(sol):
 
 @jit(nopython=True)
 def expected_dyads_dcm_rd(sol, c):
-    #TODO: redefine this function in a working way
+    #TODO: idoesn't work
     n = int(len(sol)/2)
     y = sol[:n] #TODO: tmeporary fix from an old notation
     x = sol[n:]
