@@ -36,7 +36,29 @@ class MyTest(unittest.TestCase):
 
         self.assertTrue(np.allclose(expected_k, k, atol=1e-02, rtol=1e-02))
 
-    
+ 
+    def test_sparse_cm(self):
+        A = np.array([[0, 1, 1, 0],
+                [1, 0, 1, 1],
+                [1, 1, 0, 0],
+                [0, 1, 0, 0]])
+        sA = scipy.sparse.csr_matrix(A)
+        
+        sol, step, diff = iterative_solver(sA, max_steps = 300, eps = 0.01, method='cm')
+        # output convergence 
+        # print('steps = {}'.format(step))
+        # print('diff = {}'.format(diff))
+        # epectation degree vs actual degree
+        expected_k = sample.expected_degree(sol, 'cm')
+        k = sample.out_degree(sA)
+        # debug check
+        print(k)
+        print(expected_k)
+        print(np.linalg.norm(k- expected_k))
+
+        self.assertTrue(np.allclose(expected_k, k, atol=1e-02, rtol=1e-02))
+
+   
     def test_array_dcm(self):
         A = np.array([[0, 1, 1, 0],
                 [0, 0, 1, 1],
