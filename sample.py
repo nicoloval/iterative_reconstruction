@@ -55,6 +55,15 @@ def setup(A, method):
     """takes in input adjacency matrix and method string 
     and returns the parameters array and the initial point
     """
+    if method == 'cm':
+        # A should be symmetric!!!
+        par = out_degree(A)
+        L = A.sum()
+        # starting point
+        v0 = par/np.sqrt(L)
+
+        return [par, v0]
+
     if method == 'dcm':
         k_out = out_degree(A)
         k_in = in_degree(A)
@@ -197,6 +206,7 @@ def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm'):
     """
     # function choice
     f_dict = {
+            'cm' : iterative_fun_cm,
             'dcm' : iterative_fun_dcm,
             'dcm_rd': iterative_fun_dcm_rd
             }

@@ -11,6 +11,24 @@ class MyTest(unittest.TestCase):
     def setUp(self):
         pass
     
+
+    def test_cm(self):
+        A = np.array(
+                [[0, 1, 1, 0, 0],
+                [1, 0, 1, 0, 0],
+                [1, 1, 0, 1, 0],
+                [0, 0, 1, 0, 1],
+                [0, 0, 0, 1, 0]]
+        )
+
+        l = sample.setup(A, method='cm')
+
+        right_par = np.array([2, 2, 3, 2, 1])
+        right_v0 = right_par/np.sqrt(A.sum())
+
+        self.assertTrue(np.alltrue(l[0] == right_par) & np.alltrue(l[1] == right_v0))
+
+ 
     def test_dcm(self):
         A = np.array(
                 [[0, 1, 1, 0, 0],
