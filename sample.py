@@ -297,6 +297,47 @@ def zeros_count(a):
         return int((n*(n-1) - tmp.count_nonzero()))
 
 
+def expected_degree(sol, method, directed=None, d=None):
+    """returns expected degree after ERGM method
+
+    Parameters
+    ----------
+
+    :param sol: :class:`~numpy.ndarray`
+        Solution of the ERGM problem
+    :param method: :class:`~string`
+        String stands for the requested method
+    :param directed: :class:`~string`
+        If the method is for directed network.
+        Accepted values are "In" and "Out"
+    :param d: :class:`~dict`
+        Scalability map for reduced method
+
+
+    Returns
+    -------
+
+    :return k: :class:`~numpy.ndarray`
+        array of expected out-degrees
+    """
+    # undericted methods
+    if method == 'cm':
+        return expected_degree_cm(sol)
+    # directed methods 
+    if directed == 'Out':
+        if method == 'dcm':
+            return expected_out_degree_dcm(sol)
+        if method == 'dcm_rd':
+            sol_full = rd2full(sol, d, 'dcm_rd')
+            return expected_out_degree_dcm(sol_full)
+    if directed == 'In':
+        if method == 'dcm':
+            return expected_in_degree_dcm(sol)
+        if method == 'dcm_rd':
+            sol_full = rd2full(sol, d, 'dcm_rd')
+            return expected_in_degree_dcm(sol_full)
+
+
 def expected_out_degree(sol, method, d=None):
     # TODO: controllare che funzioni
     """returns expected out degree after ERGM method, on undirected networks
@@ -331,6 +372,20 @@ def expected_out_degree(sol, method, d=None):
             y[d_vals[i]] = k[i] 
 
         return y 
+
+
+@jit(nopython=True)
+def expected_degree_cm(sol):
+    n = len(sol)
+    a = sol
+
+    k = np.zeros(n)  # allocate k
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                k[i] += a[j]*a[i] / (1 + a[j]*a[i])
+
+    return k
 
 
 @jit(nopython=True)
