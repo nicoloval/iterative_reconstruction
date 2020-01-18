@@ -17,6 +17,43 @@ class MyTest(unittest.TestCase):
         pass
     
 
+    def test_sparse_cm(self):
+        A = np.array([[0, 1, 1, 0],
+                [1, 0, 1, 1],
+                [1, 1, 0, 0],
+                [0, 1, 0, 0]])
+        sA = scipy.sparse.csr_matrix(A)
+        # debug check
+        # sk_out = sample.out_degree(sA)
+        # sk_in = sample.in_degree(sA)
+        # sk = np.concatenate((sk_out, sk_in))
+        ##  print(sk) 
+        sol, step, diff = iterative_solver(sA, max_steps = 300, eps = 0.01, method='cm')
+        # sample matrix
+        sample.ensemble_sampler(sol=sol, m=1, method='cm')
+        # load matrix
+        AA = scipy.sparse.load_npz('cm_graph_0.npz')
+
+        # debug check
+        """
+        epectation degree vs actual degree
+        expected_out_it = sample.expected_out_degree(sol, 'dcm')
+        expected_in_it = sample.expected_in_degree(sol, 'dcm')
+        expected_k = np.concatenate((expected_out_it, expected_in_it))
+        _out = sample.out_degree(AA)
+        k_in = sample.in_degree(AA)
+        k = np.concatenate((k_out, k_in))
+        print(k)
+        print(expected_k)
+        print(np.linalg.norm(k- expected_k))
+        """
+
+        # remove sampled graph
+        os.remove('cm_graph_0.npz')
+
+        self.assertTrue(sA.size == AA.size)
+
+
     def test_sparse_dcm(self):
         A = np.array([[0, 1, 1, 0],
                 [0, 0, 1, 1],
@@ -51,7 +88,7 @@ class MyTest(unittest.TestCase):
         # remove sampled graph
         os.remove('dcm_graph_0.npz')
 
-        self.assertTrue(A.sum() == A.sum())
+        self.assertTrue(sA.size == AA.size)
 
 
 if __name__ == '__main__':

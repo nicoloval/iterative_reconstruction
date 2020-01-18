@@ -697,15 +697,32 @@ def ensemble_sampler(sol, m, method, sample_dir='.', start=0, seed=None):
     """ samples m adjacency matrices in diretory sampler_dir, after the method ergm solution given by sol
     """
     np.random.seed(seed)
+    # if sample_dir doesn't exists, creates it
+    try:
+        os. mkdir(sample_dir)
+    except FileExistsError:
+        pass
+
+    if method == 'cm':
+        n = len(sol)
+        x = sol
+        for k in range(start, start + m):
+            r = np.random.random((n, n))
+            a = np.outer(x, x)/(np.ones((n, n)) + np.outer(x, x))
+            np.fill_diagonal(a, 0)
+            c = np.zeros((n, n))
+            c[a.__gt__(r)] = 1
+            del r, a
+            sparse_matrix = scipy.sparse.coo_matrix(c)
+            del c
+
+            outfile = sample_dir + '/' + 'cm_graph_{}.npz'.format(k)
+            scipy.sparse.save_npz(outfile, sparse_matrix)
+
     if method == 'dcm':
         n = int(len(sol)/2)
         x = sol[:n]
         y = sol[n:]
-        # if sample_dir doesn't exists, creates it
-        try:
-            os. mkdir(sample_dir)
-        except FileExistsError:
-            pass
         # sampling
         for k in range(start, start + m):
             r = np.random.random((n, n))
