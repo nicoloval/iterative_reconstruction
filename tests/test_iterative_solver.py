@@ -30,18 +30,18 @@ class MyTest(unittest.TestCase):
         expected_k = sample.expected_degree(sol, 'cm')
         k = sample.out_degree(A)
         # debug check
-        print(k)
-        print(expected_k)
-        print(np.linalg.norm(k- expected_k))
+        # print(k)
+        # print(expected_k)
+        # print(np.linalg.norm(k- expected_k))
 
         self.assertTrue(np.allclose(expected_k, k, atol=1e-02, rtol=1e-02))
 
  
     def test_sparse_cm(self):
         A = np.array([[0, 1, 1, 0],
-                [1, 0, 1, 1],
-                [1, 1, 0, 0],
-                [0, 1, 0, 0]])
+                      [1, 0, 1, 0],
+                      [1, 1, 0, 0],
+                      [0, 0, 0, 0]])
         sA = scipy.sparse.csr_matrix(A)
         
         sol, step, diff = iterative_solver(sA, max_steps = 300, eps = 0.01, method='cm')
@@ -52,9 +52,9 @@ class MyTest(unittest.TestCase):
         expected_k = sample.expected_degree(sol, 'cm')
         k = sample.out_degree(sA)
         # debug check
-        print(k)
-        print(expected_k)
-        print(np.linalg.norm(k- expected_k))
+        # print(k)
+        # print(expected_k)
+        # print(np.linalg.norm(k- expected_k))
 
         self.assertTrue(np.allclose(expected_k, k, atol=1e-02, rtol=1e-02))
 
