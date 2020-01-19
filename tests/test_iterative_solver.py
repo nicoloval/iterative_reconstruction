@@ -84,6 +84,34 @@ class MyTest(unittest.TestCase):
         self.assertTrue(np.allclose(expected_k, k, atol=1e-02, rtol=1e-02))
 
 
+    def test_array_rdcm(self):
+        A = np.array([[0, 1, 1, 0],
+                [1, 0, 1, 1],
+                [0, 0, 0, 0],
+                [0, 0, 1, 0]])
+        
+        sol, step, diff = iterative_solver(A, method = 'rdcm', max_steps = 300, eps = 0.01)
+        print(sol)
+        # output convergence 
+        # print('steps = {}'.format(step))
+        # print('diff = {}'.format(diff))
+        # epectation degree vs actual degree
+        expected_out_nr_it = sample.expected_non_reciprocated_out_degree_rdcm(sol)
+        expected_in_nr_it = sample.expected_non_reciprocated_in_degree_rdcm(sol)
+        expected_k_r_it = sample.expected_reciprocated_degree_rdcm(sol)
+        expected_k = np.concatenate((expected_out_nr_it, expected_in_nr_it, expected_k_r_it))
+        k_out_nr = sample.non_reciprocated_out_degree(A)
+        k_in_nr = sample.non_reciprocated_in_degree(A)
+        k_r = sample.reciprocated_degree(A)
+        k = np.concatenate((k_out_nr, k_in_nr, k_r))
+        # debug check
+        # print(k)
+        # print(expected_k)
+        # print(np.linalg.norm(k- expected_k))
+
+        self.assertTrue(np.allclose(expected_k, k, atol=1e-02, rtol=1e-02))
+
+
     def test_sparse_dcm(self):
         A = np.array([[0, 1, 1, 0],
                 [0, 0, 1, 1],
@@ -135,6 +163,36 @@ class MyTest(unittest.TestCase):
         # print(expected_k)
         # print(np.linalg.norm(k- expected_k))
 
+
+        self.assertTrue(np.allclose(expected_k, k, atol=1e-02, rtol=1e-02))
+
+
+    def test_sparse_rdcm(self):
+        A = np.array([[0, 1, 1, 0],
+                [1, 0, 1, 1],
+                [0, 0, 0, 0],
+                [0, 0, 1, 0]])
+
+        sA = scipy.sparse.csr_matrix(A)
+        
+        sol, step, diff = iterative_solver(A, method = 'rdcm', max_steps = 300, eps = 0.01)
+        print(sol)
+        # output convergence 
+        # print('steps = {}'.format(step))
+        # print('diff = {}'.format(diff))
+        # epectation degree vs actual degree
+        expected_out_nr_it = sample.expected_non_reciprocated_out_degree_rdcm(sol)
+        expected_in_nr_it = sample.expected_non_reciprocated_in_degree_rdcm(sol)
+        expected_k_r_it = sample.expected_reciprocated_degree_rdcm(sol)
+        expected_k = np.concatenate((expected_out_nr_it, expected_in_nr_it, expected_k_r_it))
+        k_out_nr = sample.non_reciprocated_out_degree(A)
+        k_in_nr = sample.non_reciprocated_in_degree(A)
+        k_r = sample.reciprocated_degree(A)
+        k = np.concatenate((k_out_nr, k_in_nr, k_r))
+        # debug check
+        # print(k)
+        # print(expected_k)
+        # print(np.linalg.norm(k- expected_k))
 
         self.assertTrue(np.allclose(expected_k, k, atol=1e-02, rtol=1e-02))
 

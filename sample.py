@@ -91,6 +91,22 @@ def setup(A, method):
 
         return [par, v0]
 
+    if method == 'rdcm':
+        k_out_nr = non_reciprocated_out_degree(A)
+        k_in_nr = non_reciprocated_in_degree(A)
+        k_r = reciprocated_degree(A)
+        par = np.concatenate((k_out_nr, k_in_nr, k_r))
+        L = A.sum()
+        # starting point
+        x = k_out_nr/np.sqrt(L)
+        y = k_in_nr/np.sqrt(L)
+        z = k_r/np.sqrt(L)
+        v0 = np.concatenate((x, y, z))
+        
+        return [par, v0]
+
+
+
 
 @jit(nopython=True)
 def iterative_fun_cm(v, par):
@@ -194,6 +210,48 @@ def iterative_fun_dcm_rd(v, par):
     return np.concatenate((xx, yy))
 
 
+@jit(nopython=True)
+def iterative_fun_rdcm(v, par):
+    """Return the next iterative step.
+    All inputs should have the same dimension
+
+    Input:
+        * (x, y, z) at step n
+        * (k_out_nr, k_in_nr, k_r)
+    Output:
+        * (x, y, z) at step n+1
+    
+    """
+    # problem dimension
+    n = int(len(v)/3)
+    x = v[0:n]
+    y = v[n:2*n]
+    z = v[2*n:3*n]
+    k_out_nr = par[0:n]
+    k_in_nr = par[n:2*n]
+    k_r = par[2*n:3*n]
+    # calculate the denominators 
+    xd = np.zeros(n)
+    yd = np.zeros(n)
+    zd = np.zeros(n)
+
+    for i in range(n):
+        for j in range(n):
+            if j != i:
+                den = 1 + x[i]*y[j] + x[j]*y[i] \
+                    + z[i]*z[j]
+                xd[i] += y[j]/den
+                yd[i] += x[j]/den
+                zd[i] += z[j]/den
+
+    # calculate final solutions xx and yy
+    xx = k_out_nr/xd
+    yy = k_in_nr/yd
+    zz = k_r/zd
+
+    return np.concatenate((xx, yy, zz))
+
+
 def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm'):
     """Solve the DCM problem of the network
 
@@ -208,7 +266,8 @@ def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm'):
     f_dict = {
             'cm' : iterative_fun_cm,
             'dcm' : iterative_fun_dcm,
-            'dcm_rd': iterative_fun_dcm_rd
+            'dcm_rd': iterative_fun_dcm_rd,
+            'rdcm': iterative_fun_rdcm
             }
     iterative_fun = f_dict[method]
 
@@ -261,6 +320,40 @@ def in_degree(a):
     # if the matrix is a scipy sparse matrix
     elif type(a) in [scipy.sparse.csr.csr_matrix, scipy.sparse.coo.coo_matrix]:
         return np.sum(a > 0, 0).A1
+
+
+def non_reciprocated_out_degree(a):
+    if type(a) == np.ndarray:
+        s = a.shape
+        one = np.ones(shape=s)
+        return np.diagonal(a@(one - a))
+    # if the matrix is a scipy sparse matrix
+    elif type(a) in [scipy.sparse.csr.csr_matrix, scipy.sparse.coo.coo_matrix]:
+        s = a.shape
+        one = np.ones(shape=s)
+        o = scipy.sparse.csr_matrix(one)
+        return (a.dot(o - a)).diagonal()
+
+
+def non_reciprocated_in_degree(a):
+    if type(a) == np.ndarray:
+        s = a.shape
+        one = np.ones(shape=s)
+        return np.diagonal(a.transpose()@(one - a.transpose()))
+    # if the matrix is a scipy sparse matrix
+    elif type(a) in [scipy.sparse.csr.csr_matrix, scipy.sparse.coo.coo_matrix]:
+        s = a.shape
+        one = np.ones(shape=s)
+        o = scipy.sparse.csr_matrix(one)
+        return (a.transpose().dot(o - a.transpose())).diagonal()
+
+
+def reciprocated_degree(a):
+    if type(a) == np.ndarray:
+        return np.diagonal(a@a)
+    # if the matrix is a scipy sparse matrix
+    elif type(a) in [scipy.sparse.csr.csr_matrix, scipy.sparse.coo.coo_matrix]:
+        return (a.dot(a)).diagonal()
 
 
 def dyads_count(a):
@@ -483,6 +576,51 @@ def expected_in_degree_dcm_rd(sol, c):
                 k[i] += (c[i] - 1)*a_out[i]*a_in[i]/(1 + a_out[i]*a_in[i])
 
     return k 
+
+
+@jit(nopython=True)
+def expected_non_reciprocated_in_degree_rdcm(sol):
+    n = int(sol.size/3)
+    x = sol[0:n]
+    y = sol[n:2*n]
+    z = sol[2*n:3*n]
+    k = np.zeros(n)  # allocate k
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                k[i] += x[j]*y[i]/(1 + x[i]*y[j] + x[j]*y[i] + z[i]*z[j])
+
+    return k
+
+
+@jit(nopython=True)
+def expected_non_reciprocated_out_degree_rdcm(sol):
+    n = int(sol.size/3)
+    x = sol[0:n]
+    y = sol[n:2*n]
+    z = sol[2*n:3*n]
+    k = np.zeros(n)  # allocate k
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                k[i] += x[i]*y[j]/(1 + x[i]*y[j] + x[j]*y[i] + z[i]*z[j])
+
+    return k
+
+
+@jit(nopython=True)
+def expected_reciprocated_degree_rdcm(sol):
+    n = int(sol.size/3)
+    x = sol[0:n]
+    y = sol[n:2*n]
+    z = sol[2*n:3*n]
+    k = np.zeros(n)  # allocate k
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                k[i] += z[i]*z[j]/(1 + x[i]*y[j] + x[j]*y[i] + z[i]*z[j])
+
+    return k
 
 
 def expected_dyads(sol, method, A=None, t="dyads"):

@@ -58,6 +58,31 @@ class MyTest(unittest.TestCase):
         right_v = np.concatenate((right_x, right_y))
 
         self.assertTrue(np.alltrue(sample.iterative_fun_dcm_rd(v, par) == right_v))
+
+
+    def test_ones_rdcm(self):
+        A = np.array([[0, 1, 1, 1],
+                     [1, 0, 0, 0],
+                     [0, 1, 0, 1],
+                     [0, 1, 0, 0]])
+        k_out_nr = np.array([2, 0, 2, 1])
+        k_in_nr = np.array([0, 2, 1, 2])
+        k_r = np.array([1, 1, 0, 0])
+        par = np.concatenate((k_out_nr, k_in_nr, k_r))
+
+        x = np.array([1, 1, 1, 1])
+        y = np.array([1, 1, 1, 1])
+        z = np.array([1, 1, 1, 1])
+
+        v = np.concatenate((x, y, z))
+
+        right_x = np.array([8/3, 0, 8/3, 4/3])
+        right_y = np.array([0, 8/3, 4/3, 8/3])
+        right_z = np.array([4/3, 4/3, 0, 0])
+        right_v = np.concatenate((right_x, right_y, right_z))
+
+        self.assertTrue(np.alltrue(sample.iterative_fun_rdcm(v, par) == right_v))
+ 
         
  
 if __name__ == '__main__':
