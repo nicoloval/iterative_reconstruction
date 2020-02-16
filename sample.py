@@ -105,7 +105,22 @@ def setup(A, method):
         
         return [par, v0]
 
-
+    if method == 'decm':
+        k_out = out_degree(A)
+        k_in = in_degree(A)
+        s_out = out_strength(A)
+        s_in = in_strength(A)
+        par = np.concatenate((k_out, k_in, s_out, s_in))
+        L = int(k_in.sum())
+        W = int(s_in.sum())
+        # starting point
+        a_out = k_out/np.sqrt(L)
+        a_in = k_in/np.sqrt(L)
+        b_out = s_out/np.sqrt(W)
+        b_in = s_in/np.sqrt(W)
+        v0 = np.concatenate((a_out, a_in, b_out, b_in))
+        
+        return [par, v0]
 
 
 @jit(nopython=True)
@@ -252,7 +267,74 @@ def iterative_fun_rdcm(v, par):
     return np.concatenate((xx, yy, zz))
 
 
-def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm'):
+@jit(nopython=True)
+def iterative_fun_decm(v, par):
+    """Return the next iterative step.
+    All inputs should have the same dimension
+
+    Input:
+        * (a_out, a_in, b_out, b_in) at step n
+        * (k_out, k_in, s_out, s_in)
+    Output:
+        * (a_out, a_in, b_out, b_in) at step n+1
+    
+    """
+    # problem dimension
+    n = int(len(v)/4)
+    a_out = v[0:n]
+    a_in = v[n:2*n]
+    b_out = v[2*n:3*n]
+    b_in = v[3*n:4*n]
+    k_out = par[0:n]
+    k_in = par[n:2*n]
+    s_out = par[2*n:3*n]
+    s_in = par[3*n:4*n]
+    # calculate the denominators 
+    a_out_d = np.zeros(n)
+    a_in_d = np.zeros(n)
+    b_out_d = np.zeros(n)
+    b_in_d = np.zeros(n)
+
+    for i in range(n):
+        for j in range(n):
+            if j != i:
+                a_out_d[i] += a_in[j]*b_in[j]*b_out[i]/ \
+                        (1 - b_in[j]*b_out[i] \
+                        + a_in[j]*a_out[i]*b_in[j]*b_out[i])
+                a_in_d[i] += a_out[j]*b_out[j]*b_in[i]/ \
+                        (1 - b_out[j]*b_in[i] \
+                        + a_out[j]*a_in[i]*b_out[j]*b_in[i])
+                b_out_d[i] += (a_in[j]*b_in[j]*a_out[i] - b_in[j]) \
+                        /(1 - b_in[j]*b_out[i] \
+                        + a_in[j]*a_out[i]*b_in[j]*b_out[i]) \
+                        + b_in[j]/(1 - b_in[j]*b_out[i]) 
+                b_in_d[i] += (a_out[j]*b_out[j]*a_in[i] - b_out[j]) \
+                        /(1 - b_in[i]*b_out[j] \
+                        + a_in[i]*a_out[j]*b_in[i]*b_out[j]) \
+                        + b_out[j]/(1 - b_in[i]*b_out[j]) 
+                # print(i,j)
+                # print(a_out_d[i], a_in_d[i], b_out_d[i], b_in_d[i])
+        """
+        if a_out_d[i] == 0:
+            a_out_d[i] = 1
+        if a_in_d[i] == 0:
+            a_in_d[i] = 1
+        if b_out_d[i] == 0:
+            b_out_d[i] = 1
+        if b_in_d[i] == 0:
+            b_in_d[i] = 1
+        """
+
+    # calculate final solutions
+    aa_out = k_out/a_out_d
+    aa_in = k_in/a_in_d
+    bb_out = s_out/b_out_d
+    bb_in = s_in/b_in_d
+
+    return np.concatenate((aa_out, aa_in, bb_out, bb_in))
+
+
+def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm', verbose = False):
     """Solve the DCM problem of the network
 
     INPUT:
@@ -267,12 +349,18 @@ def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm'):
             'cm' : iterative_fun_cm,
             'dcm' : iterative_fun_dcm,
             'dcm_rd': iterative_fun_dcm_rd,
-            'rdcm': iterative_fun_rdcm
+            'rdcm': iterative_fun_rdcm,
+            'decm': iterative_fun_decm
             }
     iterative_fun = f_dict[method]
 
     # initial setup
     par, v = setup(A, method)
+
+    # verbose
+    if verbose == True:
+        print('\nProblem parameters = \n{}'.format(par))
+        print('\nInitial point  = \n{}'.format(v))
 
     # iteration steps
     step = 0
@@ -287,6 +375,11 @@ def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm'):
         v = vv
         del vv
         step += 1
+        # verbose
+        if verbose == True:
+            print('\n\nstep = {}'.format(step))
+            print('\nsol = {}'.format(v))
+            print('\ndiff = {}'.format(diff))
     # output  
     sol = v
 
@@ -320,6 +413,34 @@ def in_degree(a):
     # if the matrix is a scipy sparse matrix
     elif type(a) in [scipy.sparse.csr.csr_matrix, scipy.sparse.coo.coo_matrix]:
         return np.sum(a > 0, 0).A1
+
+
+def out_strength(a):  # TODO: modify for sparse matrices
+    """returns matrix A out strengths
+    
+    :param a: np.ndarray, a matrix
+    :return: numpy.ndarray
+    """
+    # if the matrix is a numpy array
+    if type(a) == np.ndarray:
+        return np.sum(a, 1)
+    # if the matrix is a scipy sparse matrix
+    elif type(a) in [scipy.sparse.csr.csr_matrix, scipy.sparse.coo.coo_matrix]:
+        return np.sum(a, 1).A1
+
+
+def in_strength(a):  # TODO: modify for sparse matrices
+    """returns matrix A in strengths
+
+    :param a: np.ndarray, a matrix
+    :return: numpy.ndarray
+    """
+    # if the matrix is a numpy array
+    if type(a) == np.ndarray:
+        return np.sum(a, 0)
+    # if the matrix is a scipy sparse matrix
+    elif type(a) in [scipy.sparse.csr.csr_matrix, scipy.sparse.coo.coo_matrix]:
+        return np.sum(a, 0).A1
 
 
 def non_reciprocated_out_degree(a):
@@ -423,12 +544,16 @@ def expected_degree(sol, method, directed=None, d=None):
         if method == 'dcm_rd':
             sol_full = rd2full(sol, d, 'dcm_rd')
             return expected_out_degree_dcm(sol_full)
+        if method == 'decm':
+            return expected_out_degree_decm(sol)
     if directed == 'In':
         if method == 'dcm':
             return expected_in_degree_dcm(sol)
         if method == 'dcm_rd':
             sol_full = rd2full(sol, d, 'dcm_rd')
             return expected_in_degree_dcm(sol_full)
+        if method == 'decm':
+            return expected_in_degree_decm(sol)
 
 
 def expected_out_degree(sol, method, d=None):
@@ -621,6 +746,148 @@ def expected_reciprocated_degree_rdcm(sol):
                 k[i] += z[i]*z[j]/(1 + x[i]*y[j] + x[j]*y[i] + z[i]*z[j])
 
     return k
+
+
+@jit(nopython=True)
+def expected_out_degree_decm(sol):
+    # problem dimension
+    n = int(len(sol)/4)
+    a_out = sol[0:n]
+    a_in = sol[n:2*n]
+    b_out = sol[2*n:3*n]
+    b_in = sol[3*n:4*n]
+    # calculate the denominators 
+    a_out_d = np.zeros(n)
+    a_in_d = np.zeros(n)
+    b_out_d = np.zeros(n)
+    b_in_d = np.zeros(n)
+
+    for i in range(n):
+        for j in range(n):
+            if j != i:
+                a_out_d[i] += a_in[j]*b_in[j]*b_out[i]/(1 \
+                        - b_in[j]*b_out[i] \
+                        + a_in[j]*a_out[i]*b_in[j]*b_out[i])
+
+    # calculate final solutions xx and yy
+    aa_out = a_out*a_out_d
+
+    return aa_out
+
+
+@jit(nopython=True)
+def expected_in_degree_decm(sol):
+    # problem dimension
+    n = int(len(sol)/4)
+    a_out = sol[0:n]
+    a_in = sol[n:2*n]
+    b_out = sol[2*n:3*n]
+    b_in = sol[3*n:4*n]
+    # calculate the denominators 
+    a_out_d = np.zeros(n)
+    a_in_d = np.zeros(n)
+    b_out_d = np.zeros(n)
+    b_in_d = np.zeros(n)
+
+    for i in range(n):
+        for j in range(n):
+            if j != i:
+                a_in_d[i] += a_out[j]*b_out[j]*b_in[i]/(1 \
+                        - b_out[j]*b_in[i] \
+                        + a_out[j]*a_in[i]*b_out[j]*b_in[i])
+
+    # calculate final solutions xx and yy
+    aa_in = a_in*a_in_d
+
+    return aa_in
+
+
+def expected_strength(sol, method, directed=None, d=None):
+    """returns expected strengths after ERGM method
+
+    Parameters
+    ----------
+
+    :param sol: :class:`~numpy.ndarray`
+        Solution of the ERGM problem
+    :param method: :class:`~string`
+        String stands for the requested method
+    :param directed: :class:`~string`
+        If the method is for directed network.
+        Accepted values are "In" and "Out"
+    :param d: :class:`~dict`
+        Scalability map for reduced method
+
+    Returns
+    -------
+
+    :return k: :class:`~numpy.ndarray`
+        array of expected strengths
+    """
+    # undericted methods
+    # directed methods 
+    if directed == 'Out':
+        if method == 'decm':
+            return expected_out_strength_decm(sol)
+    if directed == 'In':
+        if method == 'decm':
+            return expected_in_strength_decm(sol)
+
+
+@jit(nopython=True)
+def expected_out_strength_decm(sol):
+    # problem dimension
+    n = int(len(sol)/4)
+    a_out = sol[0:n]
+    a_in = sol[n:2*n]
+    b_out = sol[2*n:3*n]
+    b_in = sol[3*n:4*n]
+    # calculate the denominators 
+    a_out_d = np.zeros(n)
+    a_in_d = np.zeros(n)
+    b_out_d = np.zeros(n)
+    b_in_d = np.zeros(n)
+
+    for i in range(n):
+        for j in range(n):
+            if j != i:
+                b_out_d[i] += (a_in[j]*b_in[j]*a_out[i] - b_in[j]) \
+                        /(1 - b_in[j]*b_out[i] \
+                        + a_in[j]*a_out[i]*b_in[j]*b_out[i]) \
+                        + b_in[j]/(1 - b_in[j]*b_out[i]) 
+
+    # calculate final solutions xx and yy
+    bb_out = b_out*b_out_d
+
+    return bb_out
+
+
+@jit(nopython=True)
+def expected_in_strength_decm(sol):
+    # problem dimension
+    n = int(len(sol)/4)
+    a_out = sol[0:n]
+    a_in = sol[n:2*n]
+    b_out = sol[2*n:3*n]
+    b_in = sol[3*n:4*n]
+    # calculate the denominators 
+    a_out_d = np.zeros(n)
+    a_in_d = np.zeros(n)
+    b_out_d = np.zeros(n)
+    b_in_d = np.zeros(n)
+
+    for i in range(n):
+        for j in range(n):
+            if j != i:
+                b_out_d[i] += (a_in[j]*b_in[j]*a_out[i] - b_in[j]) \
+                        /(1 - b_in[j]*b_out[i] \
+                        + a_in[j]*a_out[i]*b_in[j]*b_out[i]) \
+                        + b_in[j]/(1 - b_in[j]*b_out[i]) 
+
+    # calculate final solutions xx and yy
+    bb_in = b_in*b_in_d
+
+    return bb_in
 
 
 def expected_dyads(sol, method, A=None, t="dyads"):

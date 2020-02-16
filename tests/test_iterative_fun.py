@@ -82,8 +82,32 @@ class MyTest(unittest.TestCase):
         right_v = np.concatenate((right_x, right_y, right_z))
 
         self.assertTrue(np.alltrue(sample.iterative_fun_rdcm(v, par) == right_v))
- 
-        
+
+
+    def test_halves_decm(self):
+        A = np.array([[0, 2],
+                      [2, 0]])
+        x0 = 0.5 * np.ones(8)
+        par = sample.setup(A, 'decm')
+        fx0 = np.array([13/2, 13/2, 13/2, 13/2, 39/4, 39/4, 39/4, 39/4]) 
+        test_value = sample.iterative_fun_decm(x0, par[0])
+        # test result
+        self.assertTrue(np.all(fx0 == np.round(test_value, decimals=3)))
+
+
+    def test_halves_2_decm(self):
+        A = np.array([[0, 2, 1],
+                      [3, 0, 0],
+                      [1, 0, 0]])
+        x0 = 0.5 * np.ones(12)
+        par = sample.setup(A, 'decm')
+        fx0 = np.array([13/2, 13/4, 13/4, 13/2, 13/4, 13/4, 3*39/16, 3*39/16, 39/16, 4*39/16, 2*39/16, 39/16]) 
+        test_value = sample.iterative_fun_decm(x0, par[0])
+        # test result
+        self.assertTrue(np.all(fx0 == np.round(test_value, decimals=4)))
+
+
+
  
 if __name__ == '__main__':
     unittest.main()

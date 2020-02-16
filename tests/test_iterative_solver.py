@@ -15,7 +15,7 @@ class MyTest(unittest.TestCase):
     def setUp(self):
         pass
 
-
+    """
     def test_array_cm(self):
         A = np.array([[0, 1, 1, 0],
                 [1, 0, 1, 1],
@@ -225,7 +225,36 @@ class MyTest(unittest.TestCase):
         # print(np.linalg.norm(k- expected_k))
 
         self.assertTrue(np.allclose(expected_k, k, atol=1e-02, rtol=1e-02))
+    """
+   
+    def test_array_decm(self):
+        A = np.array([[0, 2, 1, 0],
+                [0, 0, 2, 1],
+                [0, 3, 0, 0],
+                [1, 0, 1, 0]])
+        
+        sol, step, diff = iterative_solver(A, max_steps = 300, eps = 0.01, method='decm', verbose=True)
+        # output convergence 
+        # print('steps = {}'.format(step))
+        # print('diff = {}'.format(diff))
+        # epectation degree vs actual degree
+        expected_kout_it = sample.expected_out_degree_decm(sol)
+        expected_kin_it = sample.expected_in_degree_decm(sol)
+        expected_sout_it = sample.expected_out_strength_decm(sol)
+        expected_sin_it = sample.expected_in_strength_decm(sol)
+        expected = np.concatenate((expected_kout_it, expected_kin_it, expected_sout_it, expected_sin_it))
+        k_out = sample.out_degree(A)
+        k_in = sample.in_degree(A)
+        s_out = sample.out_strength(A)
+        s_in = sample.in_strength(A)
+        actual = np.concatenate((k_out, k_in, s_out, s_in))
+        # debug check
+        print('\n\n')
+        print(actual)
+        print(expected)
+        # print(np.linalg.norm(k- expected_k))
 
+        self.assertTrue(np.allclose(expected, actual, atol=1e-02, rtol=1e-02))
 
 
 if __name__ == '__main__':
