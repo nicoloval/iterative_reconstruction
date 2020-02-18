@@ -116,8 +116,8 @@ def setup(A, method):
         # starting point
         a_out = k_out/np.sqrt(L)
         a_in = k_in/np.sqrt(L)
-        b_out = s_out/np.sqrt(W)
-        b_in = s_in/np.sqrt(W)
+        b_out = s_out/W
+        b_in = s_in/W
         v0 = np.concatenate((a_out, a_in, b_out, b_in))
         
         return [par, v0]
@@ -271,6 +271,7 @@ def iterative_fun_rdcm(v, par):
 def iterative_fun_decm(v, par):
     """Return the next iterative step.
     All inputs should have the same dimension
+    and are numpy.arrays
 
     Input:
         * (a_out, a_in, b_out, b_in) at step n
@@ -298,11 +299,11 @@ def iterative_fun_decm(v, par):
     for i in range(n):
         for j in range(n):
             if j != i:
-                a_out_d[i] += a_in[j]*b_in[j]*b_out[i]/ \
-                        (1 - b_in[j]*b_out[i] \
+                a_out_d[i] += a_in[j]*b_in[j]*b_out[i] \
+                        /(1 - b_in[j]*b_out[i] \
                         + a_in[j]*a_out[i]*b_in[j]*b_out[i])
-                a_in_d[i] += a_out[j]*b_out[j]*b_in[i]/ \
-                        (1 - b_out[j]*b_in[i] \
+                a_in_d[i] += a_out[j]*b_out[j]*b_in[i] \
+                        /(1 - b_out[j]*b_in[i] \
                         + a_out[j]*a_in[i]*b_out[j]*b_in[i])
                 b_out_d[i] += (a_in[j]*b_in[j]*a_out[i] - b_in[j]) \
                         /(1 - b_in[j]*b_out[i] \
@@ -312,8 +313,11 @@ def iterative_fun_decm(v, par):
                         /(1 - b_in[i]*b_out[j] \
                         + a_in[i]*a_out[j]*b_in[i]*b_out[j]) \
                         + b_out[j]/(1 - b_in[i]*b_out[j]) 
-                # print(i,j)
-                # print(a_out_d[i], a_in_d[i], b_out_d[i], b_in_d[i])
+
+        print(a_out_d)
+        print(a_in_d)
+        print(b_out_d)
+        print(b_in_d)
         """
         if a_out_d[i] == 0:
             a_out_d[i] = 1
@@ -368,6 +372,7 @@ def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm', verbose = F
     while diff > eps and step < max_steps:
         # iterative step
         vv = iterative_fun(v, par)
+        old_v = v
         # convergence step
         diff = np.linalg.norm(v - vv)/np.linalg.norm(v)  # 2-norm 
         del v
@@ -380,6 +385,10 @@ def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm', verbose = F
             print('\n\nstep = {}'.format(step))
             print('\nsol = {}'.format(v))
             print('\ndiff = {}'.format(diff))
+            # expectation error 
+            err = np.nan_to_num(old_v*par/v)
+            print('\nexpectation = {}'.format(err))
+
     # output  
     sol = v
 

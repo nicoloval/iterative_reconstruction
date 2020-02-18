@@ -119,7 +119,7 @@ class MyTest(unittest.TestCase):
                 [0, 0, 1, 0]])
         sA = scipy.sparse.csr_matrix(A)
         
-        sol, step, diff = iterative_solver(sA, max_steps = 300, eps = 0.01)
+        sol, step, diff = iterative_solver(sA, max_steps = 300, eps = 0.01, verbose=True)
         # output convergence 
         # print('steps = {}'.format(step))
         # print('diff = {}'.format(diff))
@@ -225,6 +225,7 @@ class MyTest(unittest.TestCase):
         # print(np.linalg.norm(k- expected_k))
 
         self.assertTrue(np.allclose(expected_k, k, atol=1e-02, rtol=1e-02))
+
     """
    
     def test_array_decm(self):
