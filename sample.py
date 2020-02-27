@@ -116,8 +116,14 @@ def setup(A, method):
         # starting point
         a_out = k_out/np.sqrt(L)
         a_in = k_in/np.sqrt(L)
+        """
         b_out = s_out/W
         b_in = s_in/W
+        a_out = 0.5*np.ones(len(k_in)) 
+        a_in = 0.5*np.ones(len(k_in))
+        """
+        b_out = 0.9*np.ones(len(k_in)) 
+        b_in = 0.9*np.ones(len(k_in))
         v0 = np.concatenate((a_out, a_in, b_out, b_in))
         
         return [par, v0]
@@ -314,11 +320,11 @@ def iterative_fun_decm(v, par):
                         + a_in[i]*a_out[j]*b_in[i]*b_out[j]) \
                         + b_out[j]/(1 - b_in[i]*b_out[j]) 
 
+        """
         print(a_out_d)
         print(a_in_d)
         print(b_out_d)
         print(b_in_d)
-        """
         if a_out_d[i] == 0:
             a_out_d[i] = 1
         if a_in_d[i] == 0:
@@ -338,7 +344,7 @@ def iterative_fun_decm(v, par):
     return np.concatenate((aa_out, aa_in, bb_out, bb_in))
 
 
-def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm', verbose = False):
+def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm', alfa=1, verbose = False):
     """Solve the DCM problem of the network
 
     INPUT:
@@ -371,7 +377,7 @@ def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm', verbose = F
     diff = eps + 1
     while diff > eps and step < max_steps:
         # iterative step
-        vv = iterative_fun(v, par)
+        vv = v + alfa*(iterative_fun(v, par)-v)
         old_v = v
         # convergence step
         diff = np.linalg.norm(v - vv)/np.linalg.norm(v)  # 2-norm 
@@ -383,11 +389,12 @@ def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm', verbose = F
         # verbose
         if verbose == True:
             print('\n\nstep = {}'.format(step))
+            print('\nalfa = {}'.format(alfa))
             print('\nsol = {}'.format(v))
             print('\ndiff = {}'.format(diff))
             # expectation error 
-            err = np.nan_to_num(old_v*par/v)
-            print('\nexpectation = {}'.format(err))
+            # err = np.nan_to_num(old_v*par/v)
+            # print('\nexpectation = {}'.format(err))
 
     # output  
     sol = v
@@ -888,10 +895,10 @@ def expected_in_strength_decm(sol):
     for i in range(n):
         for j in range(n):
             if j != i:
-                b_out_d[i] += (a_in[j]*b_in[j]*a_out[i] - b_in[j]) \
-                        /(1 - b_in[j]*b_out[i] \
-                        + a_in[j]*a_out[i]*b_in[j]*b_out[i]) \
-                        + b_in[j]/(1 - b_in[j]*b_out[i]) 
+                b_in_d[i] += (a_out[j]*b_in[i]*a_out[j] - b_in[i]) \
+                        /(1 - b_in[i]*b_out[j] \
+                        + a_in[i]*a_out[j]*b_in[i]*b_out[j]) \
+                        + b_out[j]/(1 - b_in[i]*b_out[j]) 
 
     # calculate final solutions xx and yy
     bb_in = b_in*b_in_d
