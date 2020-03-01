@@ -45,6 +45,7 @@ class MyTest(unittest.TestCase):
 
         self.assertTrue(np.alltrue(l[0] == right_par) & np.alltrue(l[1] == right_v0))
         
+
     def test_dcm_rd(self):
         A = np.array(
                 [[0, 1, 1, 0, 0],
@@ -60,6 +61,7 @@ class MyTest(unittest.TestCase):
         right_v0 = np.array([2, 1, 3, 1, 2, 3, 1, 1])/np.sqrt(A.sum())
 
         self.assertTrue(np.alltrue(l[0] == right_par) & np.alltrue(l[1] == right_v0))
+
 
     def test_decm(self):
         A = np.array(

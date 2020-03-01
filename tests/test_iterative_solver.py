@@ -12,10 +12,11 @@ import scipy.sparse
 
 class MyTest(unittest.TestCase):
 
+
     def setUp(self):
         pass
 
-    """
+
     def test_array_cm(self):
         A = np.array([[0, 1, 1, 0],
                 [1, 0, 1, 1],
@@ -91,7 +92,6 @@ class MyTest(unittest.TestCase):
                 [0, 0, 1, 0]])
         
         sol, step, diff = iterative_solver(A, method = 'rdcm', max_steps = 300, eps = 0.01)
-        print(sol)
         # output convergence 
         # print('steps = {}'.format(step))
         # print('diff = {}'.format(diff))
@@ -163,7 +163,6 @@ class MyTest(unittest.TestCase):
         # print(expected_k)
         # print(np.linalg.norm(k- expected_k))
 
-
         self.assertTrue(np.allclose(expected_k, k, atol=1e-02, rtol=1e-02))
 
 
@@ -176,7 +175,6 @@ class MyTest(unittest.TestCase):
         sA = scipy.sparse.csr_matrix(A)
         
         sol, step, diff = iterative_solver(A, method = 'rdcm', max_steps = 300, eps = 0.01)
-        print(sol)
         # output convergence 
         # print('steps = {}'.format(step))
         # print('diff = {}'.format(diff))
@@ -229,12 +227,13 @@ class MyTest(unittest.TestCase):
     """
    
     def test_array_decm(self):
-        A = np.array([[0, 2, 0, 0],
-                [0, 0, 2, 1],
-                [0, 3, 0, 0],
-                [1, 0, 1, 0]])
+        A = np.array([[0, 2, 1, 0],
+                      [1, 0, 3, 0],
+                      [0, 3, 0, 1],
+                      [2, 0, 2, 0]])
+
         
-        sol, step, diff = iterative_solver(A, max_steps = 1000, eps = 1e-4, method='decm', alfa=1e-2, verbose=True)
+        sol, step, diff = iterative_solver(A, max_steps = 1000, eps = 1e-4, method='decm', alfa=1e-3, verbose=True)
         # output convergence 
         # print('steps = {}'.format(step))
         # print('diff = {}'.format(diff))
@@ -257,6 +256,7 @@ class MyTest(unittest.TestCase):
         # print(np.linalg.norm(k- expected_k))
 
         self.assertTrue(np.allclose(expected, actual, atol=1e-02, rtol=1e-02))
+    """
 
 
 if __name__ == '__main__':

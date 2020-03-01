@@ -111,19 +111,26 @@ def setup(A, method):
         s_out = out_strength(A)
         s_in = in_strength(A)
         par = np.concatenate((k_out, k_in, s_out, s_in))
+        n = len(k_in)
         L = int(k_in.sum())
         W = int(s_in.sum())
         # starting point
         a_out = k_out/np.sqrt(L)
         a_in = k_in/np.sqrt(L)
+        b_out = s_out/np.sqrt(W)
+        b_in = s_in/np.sqrt(W)
+
         """
+        # still to decide the right initial point
+        a_out = k_out/np.sqrt(L)
+        a_in = k_in/np.sqrt(L)
         b_out = s_out/W
         b_in = s_in/W
         a_out = 0.5*np.ones(len(k_in)) 
         a_in = 0.5*np.ones(len(k_in))
-        """
         b_out = 0.9*np.ones(len(k_in)) 
         b_in = 0.9*np.ones(len(k_in))
+        """
         v0 = np.concatenate((a_out, a_in, b_out, b_in))
         
         return [par, v0]
@@ -166,13 +173,16 @@ def iterative_fun_dcm(v, par):
     """Return the next iterative step.
     All inputs should have the same dimension
 
+    :param v: np.array
+    :param par: np.array
+    :return: np.array 
     Input:
-        * (x, y) at step n
-        * (k_out, k_in)
+        * array(x, y) at step n
+        * array(k_out, k_in)
     Output:
-        * (x, y) at step n+1
-    
+        * array(x, y) at step n+1
     """
+
     # problem dimension
     n = int(len(v)/2)
     x = v[0:n]
@@ -201,7 +211,7 @@ def iterative_fun_dcm_rd(v, par):
     """
     :param v: np.array
     :param par: np.array
-    :return: scalar float
+    :return: np.array 
 
     """
 
@@ -377,7 +387,7 @@ def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm', alfa=1, ver
     diff = eps + 1
     while diff > eps and step < max_steps:
         # iterative step
-        vv = v + alfa*(iterative_fun(v, par)-v)
+        vv = iterative_fun(v, par)
         old_v = v
         # convergence step
         diff = np.linalg.norm(v - vv)/np.linalg.norm(v)  # 2-norm 
@@ -1169,3 +1179,15 @@ def probability_matrix(sol, method):
         p = np.outer(x, y)/(np.ones((n, n)) + np.outer(x, y))
         np.fill_diagonal(p, 0)
         return p
+
+
+def alfa_choice(dv, eps=1e-2, alfa=0.1, method='decm'):
+    if method == 'decm':
+        alfa0 = (eps-1)*dv
+        for a in alfa0:
+            if a>=0:
+                alfa = min(alfa, a)
+    else: 
+        alfa = 1
+
+    return alfa

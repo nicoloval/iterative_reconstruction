@@ -253,6 +253,7 @@ class MyTest(unittest.TestCase):
         singles_empirical_expectation = np.average(singles_l) 
         zeros_empirical_expectation = np.average(zeros_l) 
         # debug
+        """
         print('Empirical test DCM')
         print('dyads')
         print('analytical: {}'.format(dyads_fun_expectation))
@@ -263,15 +264,16 @@ class MyTest(unittest.TestCase):
         print('zeros')
         print(zeros_fun_expectation)
         print(zeros_empirical_expectation)
+        """
         # remove ensemble directory
         files = os.listdir(s_dir)
         for f in files:
             os.remove(s_dir + '/' + f)
         os.rmdir(s_dir)
         # testing
-        self.assertTrue(np.allclose(dyads_fun_expectation, dyads_empirical_expectation, atol=1e-02, rtol=1e-02))
-        self.assertTrue(np.allclose(singles_fun_expectation, singles_empirical_expectation, atol=1e-02, rtol=1e-02))
-        self.assertTrue(np.allclose(zeros_fun_expectation, zeros_empirical_expectation, atol=1e-02, rtol=1e-02))
+        self.assertTrue(np.allclose(dyads_fun_expectation, dyads_empirical_expectation, atol=1e-01, rtol=1e-01))
+        self.assertTrue(np.allclose(singles_fun_expectation, singles_empirical_expectation, atol=1e-01, rtol=1e-01))
+        self.assertTrue(np.allclose(zeros_fun_expectation, zeros_empirical_expectation, atol=1e-01, rtol=1e-01))
 
 
     def test_dcm_rd_dyads_emseble_empirical(self):
@@ -320,6 +322,7 @@ class MyTest(unittest.TestCase):
         singles_empirical_expectation = np.average(singles_l) 
         zeros_empirical_expectation = np.average(zeros_l) 
         # debug
+        """
         print('Empirical test DCM REDUCED')
         print('dyads')
         print('analytical: {}'.format(dyads_fun_expectation))
@@ -330,15 +333,16 @@ class MyTest(unittest.TestCase):
         print('zeros')
         print(zeros_fun_expectation)
         print(zeros_empirical_expectation)
+        """
         # remove ensemble directory
         files = os.listdir(s_dir)
         for f in files:
             os.remove(s_dir + '/' + f)
         os.rmdir(s_dir)
         # testing
-        self.assertTrue(np.allclose(dyads_fun_expectation, dyads_empirical_expectation, atol=1e-02, rtol=1e-02))
-        self.assertTrue(np.allclose(singles_fun_expectation, singles_empirical_expectation, atol=1e-02, rtol=1e-02))
-        self.assertTrue(np.allclose(zeros_fun_expectation, zeros_empirical_expectation, atol=1e-02, rtol=1e-02))
+        self.assertTrue(np.allclose(dyads_fun_expectation, dyads_empirical_expectation, atol=1e-01, rtol=1e-01))
+        self.assertTrue(np.allclose(singles_fun_expectation, singles_empirical_expectation, atol=1e-01, rtol=1e-01))
+        self.assertTrue(np.allclose(zeros_fun_expectation, zeros_empirical_expectation, atol=1e-01, rtol=1e-01))
 
 if __name__ == '__main__':
     unittest.main()
