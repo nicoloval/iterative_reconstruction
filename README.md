@@ -44,6 +44,10 @@ You can run them one by one, or all together tunning the bash command in the ter
 $ bash run_all.sh
 ```
 
+## Experiments 
+
+The experiments directory contains scripts to test reconstruction methods on real-world networks or rndom graphs.
+
 ## Authors
 
 ## License
