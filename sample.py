@@ -12,8 +12,12 @@ class OrderedDefaultListDict(OrderedDict): #name according to default
 
 
 def scalability_classes(A, method):
-    """returns a dictionary with the scalability classes, 
-    meaning the unique classes of coupled in and out degree
+    """returns a dictionary with the scalability classes: 
+the keys are unique couples (k_out, k_in), the objects are list of nodes with the exact (k_out, k_in) of the key. 
+    :param A: adjacency matrix
+    :param method str: denote the method
+    :return: scalability classes
+    :rtype: dict
     """
     if method == 'dcm_rd':
         k_out = out_degree(A)
@@ -30,7 +34,12 @@ def scalability_classes(A, method):
 
 
 def rd2full(x, d, method):
-    """converts a reduced vector to full form
+    """converts a reduced array to full form
+    :param x numpy.ndarray: reduced array
+    :param d dict: scalability classes
+    :param method str: denote the method
+    :return: the full extent array  
+    :rtype: numpy.ndarray
     """
     if method == 'dcm_rd':
         return rd2full_dcm_rd(x, d)
@@ -52,8 +61,15 @@ def rd2full_dcm_rd(x, d):
 
 
 def setup(A, method):
-    """takes in input adjacency matrix and method string 
+    """Setup function for the solver.
+    
+    Takes in input adjacency matrix and method string 
     and returns the parameters array and the initial point
+
+    :param A: adjacency matrix 
+    :param method str: denote the method
+    :return: list of method parameters and solver initial point 
+    :rtype: list 
     """
     if method == 'cm':
         # A should be symmetric!!!
@@ -138,16 +154,13 @@ def setup(A, method):
 
 @jit(nopython=True)
 def iterative_fun_cm(v, par):
-    """Return the next iterative step.
-    All inputs should have the same dimension
+    """Return the next iterative step for the Configuration Model.
 
-    Input:
-    ------
-        * x at step n
-        * k
-    Output:
-    -------
-        * x at step n+1
+    :param numpy.ndarray v: old iteration step 
+    :param numpy.ndarray par: constant parameters of the cm function
+    :return: next iteration step 
+    :rtype: numpy.ndarray
+
     """
 
     # problem dimension
@@ -170,17 +183,12 @@ def iterative_fun_cm(v, par):
 
 @jit(nopython=True)
 def iterative_fun_dcm(v, par):
-    """Return the next iterative step.
-    All inputs should have the same dimension
+     """Return the next iterative step for the Directed Configuration Model.
 
-    :param v: np.array
-    :param par: np.array
-    :return: np.array 
-    Input:
-        * array(x, y) at step n
-        * array(k_out, k_in)
-    Output:
-        * array(x, y) at step n+1
+    :param numpy.ndarray v: old iteration step 
+    :param numpy.ndarray par: constant parameters of the cm function
+    :return: next iteration step 
+    :rtype: numpy.ndarray
     """
 
     # problem dimension
@@ -208,11 +216,12 @@ def iterative_fun_dcm(v, par):
 
 @jit(nopython=True)
 def iterative_fun_dcm_rd(v, par):
-    """
-    :param v: np.array
-    :param par: np.array
-    :return: np.array 
+     """Return the next iterative step for the Directed Configuration Model Reduced version.
 
+    :param numpy.ndarray v: old iteration step 
+    :param numpy.ndarray par: constant parameters of the cm function
+    :return: next iteration step 
+    :rtype: numpy.ndarray
     """
 
     n = int(len(v)/2)
@@ -243,16 +252,14 @@ def iterative_fun_dcm_rd(v, par):
 
 @jit(nopython=True)
 def iterative_fun_rdcm(v, par):
-    """Return the next iterative step.
-    All inputs should have the same dimension
+     """Return the next iterative step for the Reciprocated Directed Configuration Model Reduced version.
 
-    Input:
-        * (x, y, z) at step n
-        * (k_out_nr, k_in_nr, k_r)
-    Output:
-        * (x, y, z) at step n+1
-    
+    :param numpy.ndarray v: old iteration step 
+    :param numpy.ndarray par: constant parameters of the cm function
+    :return: next iteration step 
+    :rtype: numpy.ndarray
     """
+
     # problem dimension
     n = int(len(v)/3)
     x = v[0:n]
@@ -285,18 +292,15 @@ def iterative_fun_rdcm(v, par):
 
 @jit(nopython=True)
 def iterative_fun_decm(v, par):
-    """Return the next iterative step.
-    All inputs should have the same dimension
-    and are numpy.arrays
+     """Return the next iterative step for the Directed Enhanced Configuration Model Reduced version.
 
-    Input:
-        * (a_out, a_in, b_out, b_in) at step n
-        * (k_out, k_in, s_out, s_in)
-    Output:
-        * (a_out, a_in, b_out, b_in) at step n+1
-    
+    :param numpy.ndarray v: old iteration step 
+    :param numpy.ndarray par: constant parameters of the cm function
+    :return: next iteration step 
+    :rtype: numpy.ndarray
     """
-    # problem dimension
+
+   # problem dimension
     n = int(len(v)/4)
     a_out = v[0:n]
     a_in = v[n:2*n]
@@ -355,15 +359,19 @@ def iterative_fun_decm(v, par):
 
 
 def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm', alfa=1, verbose = False):
-    """Solve the DCM problem of the network
 
-    INPUT:
-        * A: adjacency matrix 
-        * max_steps: maximum number of steps
-        * method: 'dcm', 'dcm_rd'
-    OUTPUT:
-        * [x, y] parameters solutions
+     """Return the next iterative step for the Directed Enhanced Configuration Model Reduced version.
+
+    :param numpy.ndarray A: adjacency matrix 
+    :param int max_steps: maximum number of steps allowed 
+    :param float eps: solver precision 
+    :param str method: method the solver implements 
+    :param float alfa: relaxation parameter 
+    :param bool verbose: if True, prints convergence information while running 
+    :return: model array solution, number of steps for convergence and difference between last two steps
+    :rtype: list
     """
+
     # function choice
     f_dict = {
             'cm' : iterative_fun_cm,
@@ -416,8 +424,9 @@ def out_degree(a):
     # todo: for out_degree and in_degree...check np.int32 is always returned
     """returns matrix A out degrees
 
-    :param a: numpy.ndarray, a matrix
-    :return: numpy.ndarray
+    :param a numpy.ndarray: adjacency matrix
+    :return: out degree sequence 
+    :rtype: numpy.ndarray
     """
     # if the matrix is a numpy array
     if type(a) == np.ndarray:
@@ -430,8 +439,9 @@ def out_degree(a):
 def in_degree(a):
     """returns matrix A in degrees
 
-    :param a: np.ndarray, a matrix
-    :return: numpy.ndarray
+    :param a np.ndarray: adjacency matrix
+    :return: in degree sequence 
+    :rtype: numpy.ndarray
     """
     # if the matrix is a numpy array
     if type(a) == np.ndarray:
@@ -441,12 +451,14 @@ def in_degree(a):
         return np.sum(a > 0, 0).A1
 
 
-def out_strength(a):  # TODO: modify for sparse matrices
+def out_strength(a):  
     """returns matrix A out strengths
     
-    :param a: np.ndarray, a matrix
-    :return: numpy.ndarray
+    :param a np.ndarray: adjacency matrix
+    :return: out strengths sequence 
+    :rtype: numpy.ndarray
     """
+
     # if the matrix is a numpy array
     if type(a) == np.ndarray:
         return np.sum(a, 1)
@@ -455,12 +467,14 @@ def out_strength(a):  # TODO: modify for sparse matrices
         return np.sum(a, 1).A1
 
 
-def in_strength(a):  # TODO: modify for sparse matrices
+def in_strength(a):  
     """returns matrix A in strengths
 
-    :param a: np.ndarray, a matrix
-    :return: numpy.ndarray
+    :param a np.ndarray: adjacency matrix
+    :return: in stregths sequence 
+    :rtype: numpy.ndarray
     """
+
     # if the matrix is a numpy array
     if type(a) == np.ndarray:
         return np.sum(a, 0)
@@ -470,6 +484,13 @@ def in_strength(a):  # TODO: modify for sparse matrices
 
 
 def non_reciprocated_out_degree(a):
+    """returns matrix A non reciprocated in degree 
+
+    :param a np.ndarray: adjacency matrix
+    :return: out degree non reciprocatedsequence 
+    :rtype: numpy.ndarray
+    """
+
     if type(a) == np.ndarray:
         s = a.shape
         one = np.ones(shape=s)
@@ -483,6 +504,13 @@ def non_reciprocated_out_degree(a):
 
 
 def non_reciprocated_in_degree(a):
+    """returns matrix A non reciprocated in degree 
+
+    :param a np.ndarray: adjacency matrix
+    :return: in degree non reciprocated sequence 
+    :rtype: numpy.ndarray
+    """
+
     if type(a) == np.ndarray:
         s = a.shape
         one = np.ones(shape=s)
@@ -496,6 +524,13 @@ def non_reciprocated_in_degree(a):
 
 
 def reciprocated_degree(a):
+    """returns matrix A reciprocated degree 
+
+    :param a np.ndarray: adjacency matrix
+    :return: degree reciprocated sequence 
+    :rtype: numpy.ndarray
+    """
+
     if type(a) == np.ndarray:
         return np.diagonal(a@a)
     # if the matrix is a scipy sparse matrix
@@ -505,7 +540,12 @@ def reciprocated_degree(a):
 
 def dyads_count(a):
     """Counts number of dyads
+
+    :param a np.ndarray: adjacency matrix
+    :return: dyads count
+    :rtype: int 
     """
+
     at = a.transpose()
     tmp = a + at
     if isinstance(a, np.ndarray):
@@ -515,8 +555,13 @@ def dyads_count(a):
 
 
 def singles_count(a):
-    """Counts number of not-reciprocated links
+    """Counts number of singles 
+
+    :param a np.ndarray: adjacency matrix
+    :return: singles count
+    :rtype: int 
     """
+
     at = a.transpose()
     tmp = a + at
     if isinstance(a, np.ndarray):
@@ -526,8 +571,13 @@ def singles_count(a):
 
 
 def zeros_count(a):
-    """Counts number of empty couples of nodes
+    """Counts number of zeros 
+
+    :param a np.ndarray: adjacency matrix
+    :return: zeros count
+    :rtype: int 
     """
+
     n = a.shape[0]
     at = a.transpose()
     tmp = a + at
@@ -1107,7 +1157,7 @@ def std_zeros_dcm(sol):
 
 @jit(nopython=True)
 def expected_dyads_dcm_rd(sol, c):
-    #TODO: idoesn't work
+    #TODO: doesn't work
     n = int(len(sol)/2)
     y = sol[:n] #TODO: tmeporary fix from an old notation
     x = sol[n:]
@@ -1126,6 +1176,13 @@ def expected_dyads_dcm_rd(sol, c):
 
 def ensemble_sampler(sol, m, method, sample_dir='.', start=0, seed=None):
     """ samples m adjacency matrices in diretory sampler_dir, after the method ergm solution given by sol
+    :param sol numpy.ndarray:
+    :param m int:
+    :param method str:
+    :param sample_dir str:
+    :param start int:
+    :param seed int:
+    :return: 
     """
     np.random.seed(seed)
     # if sample_dir doesn't exists, creates it
@@ -1172,6 +1229,12 @@ def ensemble_sampler(sol, m, method, sample_dir='.', start=0, seed=None):
 
 
 def probability_matrix(sol, method):
+    """
+    :param sol numpy.ndarray:
+    :param method str:
+    :return:
+    :rtype: numpy.ndarray
+    """
     if method == 'dcm':
         n = int(len(sol)/2)
         x = sol[:n]
@@ -1182,6 +1245,15 @@ def probability_matrix(sol, method):
 
 
 def alfa_choice(dv, eps=1e-2, alfa=0.1, method='decm'):
+    """
+    :param dv numpy.ndarray:
+    :param eps float:
+    :param alfa float:
+    :param method str:
+    :return: 
+    :rtype: float
+
+    """
     if method == 'decm':
         alfa0 = (eps-1)*dv
         for a in alfa0:
