@@ -17,7 +17,7 @@ To run the code you need the following modules:
 
 ### Installing
 
-## Clone
+### Clone
 
 Clone this repo to your local machine using [https://github.com/nicoloval/iterative_reconstruction](https://github.com/nicoloval/iterative_reconstruction)
 
