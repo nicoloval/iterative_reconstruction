@@ -13,6 +13,16 @@ class bcolors:
         ENDC = '\033[0m'
 
 
+def random_matrix_generator(n, sym=False, seed=None):
+        if sym == False:
+                np.random.seed(seed = seed)
+                A = np.random.randint(0, 2, size=(n, n))
+                # zeros on the diagonal
+                for i in range(n):
+                    A[i, i] = 0
+        return A
+
+
 def tester(A, verbose=False):
         t = time.time()
         tic = time.time()
@@ -20,7 +30,7 @@ def tester(A, verbose=False):
         k_in = sample.in_degree(A)
         k = np.concatenate((k_out, k_in))
         toc = time.time() - tic
-        if len(k) < 12:
+        if len(k) < 30:
                 print("\n\nExperiment matrix: \n {}".format(A))
                 print("\n degree sequence:\n{}".format(k))
         print('\ndegree sequence computation time = {}'.format(toc))
@@ -28,7 +38,7 @@ def tester(A, verbose=False):
         tic = time.time()
         n = len(k_in)
         x0 = np.array([ki/np.sqrt(n) for ki in k])  # initialial point
-        sol, step, diff = sample.iterative_solver(A, max_steps = 300, eps = 0.01, method='dcm')
+        sol, step, diff = sample.iterative_solver(A, max_steps = 300, eps = 1e-4, method='dcm')
         toc = time.time() - tic
         print('\nsolver exectution time = {}'.format(toc))
         # test results: degree reconstruction
@@ -41,7 +51,7 @@ def tester(A, verbose=False):
         print('\nsolution = {}'.format(sol))
         print('\ndegree reconstruction time = {}'.format(toc))
         print('\n{}reconstruction error = {}{}'.format(bcolors.WARNING, np.linalg.norm(k - k_sol), bcolors.ENDC))
-        if len(k) < 12:
+        if len(k) < 30:
                 print("\n Original degree sequence:\n{}".format(k))
                 print("\n Reconstructed degree sequence\n{}".format(k_sol))
         toc = time.time() - t
@@ -49,22 +59,6 @@ def tester(A, verbose=False):
 
 
 # test matrix 1
-A = np.array([[0, 1, 1, 1],
-              [1, 0, 1, 0],
-              [0, 0, 0, 1],
-              [1, 1, 0, 0]])
-tester(A)  # works
-
-# test matrix 2
-A = np.array([[0, 1, 1, 1],
-              [1, 0, 1, 0],
-              [0, 0, 0, 1],
-              [0, 0, 0, 0]])
-tester(A)  # works
-
-# test matrix 3
-A = np.array([[0, 1, 1, 0],
-              [1, 0, 1, 0],
-              [0, 1, 0, 0],
-              [1, 0, 1, 0]])
+n = 1000
+A = random_matrix_generator(n, sym=False, seed=None)
 tester(A)  # works

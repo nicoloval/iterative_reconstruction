@@ -131,10 +131,10 @@ def setup(A, method):
         L = int(k_in.sum())
         W = int(s_in.sum())
         # starting point
-        a_out = k_out/np.sqrt(L)
-        a_in = k_in/np.sqrt(L)
-        b_out = s_out/np.sqrt(W)
-        b_in = s_in/np.sqrt(W)
+        a_out = k_out/L
+        a_in = k_in/L
+        b_out = s_out/W
+        b_in = s_in/W
 
         """
         # still to decide the right initial point
@@ -183,7 +183,7 @@ def iterative_fun_cm(v, par):
 
 @jit(nopython=True)
 def iterative_fun_dcm(v, par):
-     """Return the next iterative step for the Directed Configuration Model.
+    """Return the next iterative step for the Directed Configuration Model.
 
     :param numpy.ndarray v: old iteration step 
     :param numpy.ndarray par: constant parameters of the cm function
@@ -191,7 +191,6 @@ def iterative_fun_dcm(v, par):
     :rtype: numpy.ndarray
     """
 
-    # problem dimension
     n = int(len(v)/2)
     x = v[0:n]
     y = v[n:2*n]
@@ -216,7 +215,7 @@ def iterative_fun_dcm(v, par):
 
 @jit(nopython=True)
 def iterative_fun_dcm_rd(v, par):
-     """Return the next iterative step for the Directed Configuration Model Reduced version.
+    """Return the next iterative step for the Directed Configuration Model Reduced version.
 
     :param numpy.ndarray v: old iteration step 
     :param numpy.ndarray par: constant parameters of the cm function
@@ -252,7 +251,7 @@ def iterative_fun_dcm_rd(v, par):
 
 @jit(nopython=True)
 def iterative_fun_rdcm(v, par):
-     """Return the next iterative step for the Reciprocated Directed Configuration Model Reduced version.
+    """Return the next iterative step for the Reciprocated Directed Configuration Model Reduced version.
 
     :param numpy.ndarray v: old iteration step 
     :param numpy.ndarray par: constant parameters of the cm function
@@ -292,7 +291,7 @@ def iterative_fun_rdcm(v, par):
 
 @jit(nopython=True)
 def iterative_fun_decm(v, par):
-     """Return the next iterative step for the Directed Enhanced Configuration Model Reduced version.
+    """Return the next iterative step for the Directed Enhanced Configuration Model Reduced version.
 
     :param numpy.ndarray v: old iteration step 
     :param numpy.ndarray par: constant parameters of the cm function
@@ -319,6 +318,12 @@ def iterative_fun_decm(v, par):
     for i in range(n):
         for j in range(n):
             if j != i:
+                """
+                print((1 - b_in[j]*b_out[i] + a_in[j]*a_out[i]*b_in[j]*b_out[i]))
+                print((1 - b_out[j]*b_in[i] + a_out[j]*a_in[i]*b_out[j]*b_in[i]))
+                print(1 - b_in[j]*b_out[i])
+                print(1 - b_in[i]*b_out[j])
+                """
                 a_out_d[i] += a_in[j]*b_in[j]*b_out[i] \
                         /(1 - b_in[j]*b_out[i] \
                         + a_in[j]*a_out[i]*b_in[j]*b_out[i])
@@ -335,10 +340,6 @@ def iterative_fun_decm(v, par):
                         + b_out[j]/(1 - b_in[i]*b_out[j]) 
 
         """
-        print(a_out_d)
-        print(a_in_d)
-        print(b_out_d)
-        print(b_in_d)
         if a_out_d[i] == 0:
             a_out_d[i] = 1
         if a_in_d[i] == 0:
@@ -348,6 +349,12 @@ def iterative_fun_decm(v, par):
         if b_in_d[i] == 0:
             b_in_d[i] = 1
         """
+    """
+    print(a_out_d)
+    print(a_in_d)
+    print(b_out_d)
+    print(b_in_d)
+    """
 
     # calculate final solutions
     aa_out = k_out/a_out_d
@@ -358,9 +365,8 @@ def iterative_fun_decm(v, par):
     return np.concatenate((aa_out, aa_in, bb_out, bb_in))
 
 
-def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm', alfa=1, verbose = False):
-
-     """Return the next iterative step for the Directed Enhanced Configuration Model Reduced version.
+def iterative_solver(A, x0 = None, max_steps = 300, eps = 0.01, method = 'dcm', alfa=1, verbose = False):
+    """Return the next iterative step for the Directed Enhanced Configuration Model Reduced version.
 
     :param numpy.ndarray A: adjacency matrix 
     :param int max_steps: maximum number of steps allowed 
@@ -384,6 +390,8 @@ def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm', alfa=1, ver
 
     # initial setup
     par, v = setup(A, method)
+    if x0 != None:
+        v = x0
 
     # verbose
     if verbose == True:
@@ -421,8 +429,8 @@ def iterative_solver(A, max_steps = 300, eps = 0.01, method = 'dcm', alfa=1, ver
 
 
 def out_degree(a):
-    # todo: for out_degree and in_degree...check np.int32 is always returned
-    """returns matrix A out degrees
+    #todo : for out_degree and in_degree...check np.int32 is always returned
+    """returns matrix A out degrees.
 
     :param a numpy.ndarray: adjacency matrix
     :return: out degree sequence 
@@ -437,7 +445,7 @@ def out_degree(a):
 
 
 def in_degree(a):
-    """returns matrix A in degrees
+    """returns matrix A in degrees.
 
     :param a np.ndarray: adjacency matrix
     :return: in degree sequence 
@@ -452,7 +460,7 @@ def in_degree(a):
 
 
 def out_strength(a):  
-    """returns matrix A out strengths
+    """returns matrix A out strengths.
     
     :param a np.ndarray: adjacency matrix
     :return: out strengths sequence 
