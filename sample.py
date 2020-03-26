@@ -1280,13 +1280,23 @@ def nearest_neighbour_degree(A, method='undirected'):
     if method == 'undirected':
         knn = nearest_neighbour_degree_undirected(A)
 
+    if method == 'outout':
+        knn = nearest_neighbour_degree_outout(A)
+
+    if method == 'inin':
+        knn = nearest_neighbour_degree_inin(A)
+
     return knn
 
 
 def nearest_neighbour_degree_undirected(A):
     """
     """
-    S = np.maximum( A, A.transpose() )
+    # S = np.maximum( A, A.transpose() )
+    S = A
+    del A
+    rows, cols = S.nonzero()
+    S[cols,rows] = S[rows, cols]
     k = out_degree(S)
     v = S.dot(k)
     knn = v/k 

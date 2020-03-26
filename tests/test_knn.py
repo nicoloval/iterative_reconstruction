@@ -42,6 +42,37 @@ class MyTest(unittest.TestCase):
         self.assertTrue(knn_sample == knn_nx)
 
 
+    def test_sparse_sym(self):
+        A = np.array([[0, 1, 1, 0, 1],
+                [1, 0, 1, 1, 0],
+                [1, 1, 0, 0, 0],
+                [0, 1, 0, 0, 1],
+                [1, 0, 0, 1, 0]])
+        
+        A_nx = nx.convert_matrix.from_numpy_array(A)
+
+        # sparse matrix conversion
+        A = scipy.sparse.csr_matrix(A)
+
+        k = sample.out_degree(A)
+
+        knn_sample = sample.nearest_neighbour_degree_undirected(A)
+        # knn_nx = nx.degree_assortativity_coefficient(A_nx)
+        knn_nx = nx.k_nearest_neighbors(A_nx)
+
+        # debug check
+        """
+        print(k)
+        print('\n')
+        print(knn_sample)
+        print(knn_nx)
+        """
+
+        self.assertTrue(knn_sample == knn_nx)
+
+
+
+
     def test_array_inin(self):
         A = np.array([[0, 0, 1, 0, 1],
                 [1, 0, 0, 1, 0],
