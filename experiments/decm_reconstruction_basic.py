@@ -31,7 +31,7 @@ def tester(A, verbose=False):
         n = len(k_in)
         par, x0 = sample.setup(A, method='decm')
         print('initial guess = {}'.format(x0))
-        sol, step, diff = sample.iterative_solver(A, max_steps = 300, eps = 1e-4, method='decm')
+        sol, step, diff = sample.iterative_solver(A, max_steps = 300, eps = 1e-4, method='decm', verbose=verbose)
         toc = time.time() - tic
         print('\nsolver exectution time = {}'.format(toc))
         # test results: degree reconstruction
@@ -59,8 +59,8 @@ A = np.array([[0, 2, 4, 1],
               [1, 0, 1, 0],
               [0, 0, 0, 3],
               [1, 2, 0, 0]])
-tester(A)  # works
-
+tester(A, verbose=True)  # works
+"""
 # test matrix 2
 A = np.array([[0, 3, 2, 1],
               [1, 0, 2, 0],
@@ -74,3 +74,4 @@ A = np.array([[0, 2, 3, 0],
               [0, 1, 0, 0],
               [3, 0, 5, 0]])
 tester(A)  # works
+"""

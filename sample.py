@@ -372,7 +372,7 @@ def iterative_solver(A, x0 = None, max_steps = 300, eps = 0.01, method = 'dcm', 
     :param int max_steps: maximum number of steps allowed 
     :param float eps: solver precision 
     :param str method: method the solver implements 
-    :param float alfa: relaxation parameter 
+    :param float alfa: relax parameter 
     :param bool verbose: if True, prints convergence information while running 
     :return: model array solution, number of steps for convergence and difference between last two steps
     :rtype: list
@@ -403,14 +403,15 @@ def iterative_solver(A, x0 = None, max_steps = 300, eps = 0.01, method = 'dcm', 
     diff = eps + 1
     while diff > eps and step < max_steps:
         # iterative step
-        vv = iterative_fun(v, par)
-        old_v = v
+        f_step = iterative_fun(v, par)
+        dv = f_step - v
+        alfa = alfa_choice(v, dv , method=method)
+        vv = v + alfa*dv 
+        old_v = v  # save old step
         # convergence step
         diff = np.linalg.norm(v - vv)/np.linalg.norm(v)  # 2-norm 
-        del v
         # set next step
         v = vv
-        del vv
         step += 1
         # verbose
         if verbose == True:
@@ -1252,7 +1253,7 @@ def probability_matrix(sol, method):
         return p
 
 
-def alfa_choice(dv, eps=1e-2, alfa=0.1, method='decm'):
+def alfa_choice(x, dx, eps=1e-2, alfa=0.1, method='decm'):
     """
     :param dv numpy.ndarray:
     :param eps float:
@@ -1263,7 +1264,7 @@ def alfa_choice(dv, eps=1e-2, alfa=0.1, method='decm'):
 
     """
     if method == 'decm':
-        alfa0 = (eps-1)*dv
+        alfa0 = (eps-1)*x/dx
         for a in alfa0:
             if a>=0:
                 alfa = min(alfa, a)
@@ -1271,3 +1272,62 @@ def alfa_choice(dv, eps=1e-2, alfa=0.1, method='decm'):
         alfa = 1
 
     return alfa
+
+
+def nearest_neighbour_degree(A, method='undirected'):
+    """
+    """
+    if method == 'undirected':
+        knn = nearest_neighbour_degree_undirected(A)
+
+    return knn
+
+
+def nearest_neighbour_degree_undirected(A):
+    """
+    """
+    S = np.maximum( A, A.transpose() )
+    k = out_degree(S)
+    v = S.dot(k)
+    knn = v/k 
+
+    b, c = np.unique(k, return_inverse = True)
+    knn_unique = [ knn[np.where(c == i)].sum()/len(np.where(c== i)[0]) for i in range(len(b))]
+    k_unique = np.unique(k)
+
+    # return knn
+    # return dict with degrees as keys and knn average value as value
+    return dict(zip(k_unique, knn_unique))
+
+
+def nearest_neighbour_degree_inin(A):
+    """
+    """
+    k = in_degree(A)
+    v = A.transpose().dot(k)
+    knn = v/k 
+
+    b, c = np.unique(k, return_inverse = True)
+    knn_unique = [ knn[np.where(c == i)].sum()/len(np.where(c== i)[0]) for i in range(len(b))]
+    k_unique = np.unique(k)
+
+    # return knn
+    # return dict with degrees as keys and knn average value as value
+    return dict(zip(k_unique, knn_unique))
+
+
+def nearest_neighbour_degree_outout(A):
+    """
+    """
+    k = out_degree(A)
+    v = A.dot(k)
+    knn = v/k 
+
+    b, c = np.unique(k, return_inverse = True)
+    knn_unique = [ knn[np.where(c == i)].sum()/len(np.where(c== i)[0]) for i in range(len(b))]
+    k_unique = np.unique(k)
+
+    # return knn
+    # return dict with degrees as keys and knn average value as value
+    return dict(zip(k_unique, knn_unique))
+
