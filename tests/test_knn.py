@@ -54,6 +54,11 @@ class MyTest(unittest.TestCase):
         # sparse matrix conversion
         A = scipy.sparse.csr_matrix(A)
 
+        rows, cols = A.nonzero()
+        print(rows, cols)
+        A[cols,rows] = A[rows, cols]
+
+
         k = sample.out_degree(A)
 
         knn_sample = sample.nearest_neighbour_degree_undirected(A)

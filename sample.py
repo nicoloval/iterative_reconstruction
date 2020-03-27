@@ -1341,3 +1341,53 @@ def nearest_neighbour_degree_outout(A):
     # return dict with degrees as keys and knn average value as value
     return dict(zip(k_unique, knn_unique))
 
+
+def expected_nearest_neighbour_degree_undirected(A, k):
+    """
+    """
+    # S = np.maximum( A, A.transpose() )
+    S = A
+    del A
+    rows, cols = S.nonzero()
+    S[cols,rows] = S[rows, cols]
+    v = S.dot(k)
+    knn = v/k 
+
+    b, c = np.unique(k, return_inverse = True)
+    knn_unique = [ knn[np.where(c == i)].sum()/len(np.where(c== i)[0]) for i in range(len(b))]
+    k_unique = np.unique(k)
+
+    # return knn
+    # return dict with degrees as keys and knn average value as value
+    return dict(zip(k_unique, knn_unique))
+
+
+def expected_nearest_neighbour_degree_inin(A, k):
+    """
+    """
+    v = A.transpose().dot(k)
+    knn = v/k 
+
+    b, c = np.unique(k, return_inverse = True)
+    knn_unique = [ knn[np.where(c == i)].sum()/len(np.where(c== i)[0]) for i in range(len(b))]
+    k_unique = np.unique(k)
+
+    # return knn
+    # return dict with degrees as keys and knn average value as value
+    return dict(zip(k_unique, knn_unique))
+
+
+def expected_nearest_neighbour_degree_outout(A, k):
+    """
+    """
+    v = A.dot(k)
+    knn = v/k 
+
+    b, c = np.unique(k, return_inverse = True)
+    knn_unique = [ knn[np.where(c == i)].sum()/len(np.where(c== i)[0]) for i in range(len(b))]
+    k_unique = np.unique(k)
+
+    # return knn
+    # return dict with degrees as keys and knn average value as value
+    return dict(zip(k_unique, knn_unique))
+
