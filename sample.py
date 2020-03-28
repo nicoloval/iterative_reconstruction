@@ -1362,12 +1362,19 @@ def expected_nearest_neighbour_degree_undirected(A, k):
     return dict(zip(k_unique, knn_unique))
 
 
-def expected_nearest_neighbour_degree_inin(A, k):
+def expected_dcm_nearest_neighbour_degree_inin(sol):
     """
     """
-    v = A.transpose().dot(k)
-    knn = v/k 
+    # expectation calculation
+    n = int(len(sol)/2)
+    x = sol[:n]
+    y = sol[n:]
+    k = expected_in_degree_dcm(sol)
+    # v = A.dot(k)
+    knn = np.array([ np.sum(y[i]*np.delete(x, i)*np.delete(k, i)/(np.ones(n-1) + y[i]*np.delete(x, i)))/k[i] for i in range(n)])
+    print(knn)
 
+    # dict making
     b, c = np.unique(k, return_inverse = True)
     knn_unique = [ knn[np.where(c == i)].sum()/len(np.where(c== i)[0]) for i in range(len(b))]
     k_unique = np.unique(k)
@@ -1377,12 +1384,19 @@ def expected_nearest_neighbour_degree_inin(A, k):
     return dict(zip(k_unique, knn_unique))
 
 
-def expected_nearest_neighbour_degree_outout(A, k):
+def expected_dcm_nearest_neighbour_degree_outout(sol):
     """
     """
-    v = A.dot(k)
-    knn = v/k 
+    # expectation calculation
+    n = int(len(sol)/2)
+    x = sol[:n]
+    y = sol[n:]
+    k = expected_out_degree_dcm(sol)
+    # v = A.dot(k)
+    knn = np.array([ np.sum(x[i]*np.delete(y, i)*np.delete(k, i)/(np.ones(n-1) + x[i]*np.delete(y, i)))/k[i] for i in range(n)])
+    print(knn)
 
+    # dict making
     b, c = np.unique(k, return_inverse = True)
     knn_unique = [ knn[np.where(c == i)].sum()/len(np.where(c== i)[0]) for i in range(len(b))]
     k_unique = np.unique(k)
