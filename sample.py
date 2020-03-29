@@ -1394,7 +1394,6 @@ def expected_dcm_nearest_neighbour_degree_outout(sol):
     k = expected_out_degree_dcm(sol)
     # v = A.dot(k)
     knn = np.array([ np.sum(x[i]*np.delete(y, i)*np.delete(k, i)/(np.ones(n-1) + x[i]*np.delete(y, i)))/k[i] for i in range(n)])
-    print(knn)
 
     # dict making
     b, c = np.unique(k, return_inverse = True)
